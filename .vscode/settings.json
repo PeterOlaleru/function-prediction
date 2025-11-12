@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "C:/venv/cafa6/Scripts/python.exe",
+  "python.terminal.activateEnvironment": false,
+  "jupyter.jupyterServerType": "local",
+  "jupyter.notebookFileRoot": "${workspaceFolder}"
+}

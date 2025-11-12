@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Data
+data/
+*.fasta
+*.tsv
+*.obo
+
+# Models
+experiments/
+*.pth
+*.h5
+*.pkl
+
+# Submissions
+submissions/*.tsv
+submissions/*.zip
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
