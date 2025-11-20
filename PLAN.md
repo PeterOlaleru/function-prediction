@@ -555,11 +555,33 @@ class ProtBERTClassifier(nn.Module):
         return self.sigmoid(logits)
 ```
 
-#### Step 5.5: Ensemble Methods
+#### Step 5.5: Expert Upgrades (High-Impact)
+
+**Upgrade A: Embedding-based KNN (Neural BLAST)**
+- [ ] Use pre-trained model (ESM-2 or ProtBERT) to generate embeddings
+- [ ] Build FAISS index of training embeddings
+- [ ] For each test protein:
+  - Find top-K nearest neighbors in embedding space
+  - Transfer labels from neighbors (weighted by similarity)
+- **Why:** Captures homology better than exact sequence matching (BLAST).
+
+**Upgrade B: Asymmetric Loss (Focal Loss)**
+- [ ] Replace BCELoss with Asymmetric Loss
+  - Down-weight easy negatives (common terms not present)
+  - Focus learning on hard positives (rare terms present)
+- **Why:** Crucial for handling 26,000+ imbalanced classes.
+
+**Upgrade C: Hierarchy-Aware Architecture**
+- [ ] Bake ontology into the model
+  - Use a "max-pooling" layer over child nodes to enforce parent predictions
+  - Or add a "consistency loss" term
+- **Why:** Ensures predictions respect biological reality (Child → Parent).
+
+#### Step 5.6: Ensemble Methods
 - [ ] Train multiple models
   - CNN
   - ProtBERT
-  - BLAST-based
+  - Embedding KNN
 
 - [ ] Combine predictions
   - Simple average

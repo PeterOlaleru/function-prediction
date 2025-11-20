@@ -18,22 +18,23 @@
 - [ ] Install all dependencies
 - [ ] Run setup_project.py
 - [ ] Load training sequences
-- [ ] Load training labels
-- [ ] Load GO ontology
-- [ ] Count total proteins: __________
-- [ ] Count total GO terms: __________
-- [ ] Create sequence length histogram
-- [ ] Create GO terms per protein chart
-- [ ] Create ontology distribution chart
-- [ ] Understand IA (information accretion)
-- [ ] Complete EDA notebook
+- [x] Load training labels
+- [x] Load GO ontology
+- [x] Count total proteins: 82,404
+- [x] Count total GO terms: 26,125
+- [x] Create sequence length histogram
+- [x] Create GO terms per protein chart
+- [x] Create ontology distribution chart
+- [x] Understand IA (information accretion)
+- [x] Complete EDA notebook
 
 **Notes:**
 ```
 ┌────────────────────────────────────────────┐
-│                                            │
-│                                            │
-│                                            │
+│  EDA Findings:                             │
+│  - Labels shape: (537027, 3)               │
+│  - Avg terms per protein: 6.52             │
+│  - Seq length: min=16, mean=612, max=34350 │
 └────────────────────────────────────────────┘
 ```
 
@@ -43,10 +44,10 @@
 **Target:** Build data pipeline  
 **Status:** ⬜ Not Started | ⬜ In Progress | ⬜ Complete
 
-- [ ] Create SequenceLoader class
-- [ ] Create LabelLoader class
-- [ ] Create OntologyLoader class
-- [ ] Test loading all files
+- [x] Create SequenceLoader class
+- [x] Create LabelLoader class
+- [x] Create OntologyLoader class
+- [x] Test loading all files
 - [ ] Extract amino acid composition
 - [ ] Extract k-mer features (k=3,4,5)
 - [ ] Calculate physicochemical properties
@@ -60,7 +61,7 @@
 - [ ] Verify label encoding
 
 **Validation Metrics:**
-- Training samples: __________
+- Training samples: 82,404
 - Validation samples: __________
 - Feature dimensions: __________
 
@@ -80,10 +81,10 @@
 **Status:** ⬜ Not Started | ⬜ In Progress | ⬜ Complete
 
 #### Baseline 1: Frequency
-- [ ] Count term frequencies
-- [ ] Predict top-N common terms
-- [ ] Calculate validation F1
-- [ ] **F1 Score:** __________ (Target: > 0.15)
+- [x] Count term frequencies
+- [x] Predict top-N common terms
+- [x] Calculate validation F1
+- [x] **F1 Score:** 0.1412 (Target: > 0.15)
 
 #### Baseline 2: BLAST
 - [ ] Install BLAST
@@ -255,7 +256,7 @@
 
 | Model | F1 Score | Training Time | Status |
 |-------|----------|---------------|--------|
-| Frequency Baseline | | | ⬜ |
+| Frequency Baseline | 0.1412 | < 1 min | ✅ |
 | BLAST Baseline | | | ⬜ |
 | K-mer + LogReg | | | ⬜ |
 | CNN | | | ⬜ |
