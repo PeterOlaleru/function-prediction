@@ -1,0 +1,23 @@
+{
+  "model_type": "knn",
+  "k_neighbors": 10,
+  "embedding_model": "facebook/esm2_t6_8M_UR50D",
+  "metric": "cosine",
+  "best_single_threshold": 0.4,
+  "best_single_f1": 0.2519748849925875,
+  "optimal_thresholds": {
+    "MF": 0.5,
+    "BP": 0.25,
+    "CC": 0.35
+  },
+  "aspect_specific_f1": 0.2603611169918912,
+  "best_mf_f1": 0.36565331156644243,
+  "best_bp_f1": 0.09992077564481013,
+  "best_cc_f1": 0.31550926376442096,
+  "n_train": 65923,
+  "n_val": 16481,
+  "n_predictions": 846851,
+  "avg_predictions_per_protein": 51.38347187670651,
+  "test_predictions_generated": true,
+  "n_test": 224309
+}

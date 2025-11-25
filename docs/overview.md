@@ -1,7 +1,7 @@
 # 🧬 CAFA-6 Protein Function Prediction - CONSOLIDATED OVERVIEW
 
-**Date:** 23 Nov 2025  
-**Current Best Model:** Fine-tuned ESM-2 (Asymmetric Loss) — F1 = 0.2331  
+**Date:** 25 Nov 2025  
+**Current Best Model:** KNN with aspect-specific thresholds — F1 = 0.2579  
 **Keep for detailed execution:** `docs/PLAN.md`
 
 ---
@@ -24,41 +24,45 @@ Metric: Weighted F1 (information accretion).
 ## 3. 📊 Current Performance
 | Model | F1 | Notes |
 |-------|----|-------|
-| Frequency | 0.1412 | Predicts common terms |
-| KNN (ESM-2 embeddings) | 0.1776 | Homology-style transfer |
+| Frequency | 0.1619 | Predicts common terms (per-aspect metric) |
+| KNN (single threshold 0.40) | 0.2520 | Homology-style transfer |
+| **KNN (aspect-specific thresholds)** | **0.2579** | MF=0.40, BP=0.20, CC=0.40 🏆 |
+| KNN + Label Propagation | 0.2181 | ❌ Propagation hurts (-15%) |
 | MLP (Frozen embeddings) | 0.1672 | Underperformed KNN |
 | ESM-2 Fine-Tuned (BCE) | 0.1806 | Needed threshold tuning |
-| ESM-2 Fine-Tuned (Asym Loss) | 0.2331 | Current best |
+| ESM-2 Fine-Tuned (Asym Loss) | 0.2331 | Needs re-eval with per-aspect metric |
 
 Trajectory target: Short-term 0.25–0.27; Mid-term 0.30+; Long-term 0.35–0.40.
 
 ---
-## 4. 🔥 Immediate High-ROI Actions (Next 1–2 Days)
+## 4. 🔥 Immediate High-ROI Actions (Next 2 Months)
 | Action | Impact | Effort | Notes |
 |--------|--------|--------|-------|
-| Label propagation | +0.02–0.04 | 2h | Add ancestors at inference |
-| Per-aspect thresholds | +0.01–0.02 | 1h | MF/BP/CC separate tuning |
-| Simple ensemble (KNN + ESM) | +0.01–0.02 | 30m | Weighted average |
-| Larger backbone (ESM-2 35M) | +0.03–0.05 | 12h | Reduce batch size |
+| ~~Label propagation~~ | ❌ -15% | 2h | Does NOT work with KNN (errors amplify) |
+| Per-aspect thresholds | ✅ +2.3% | 1h | MF=0.40, BP=0.20, CC=0.40 → F1=0.2579 |
+| ESM-2 150M (1 epoch validation) | +0.06–0.09 | 4h | Pipeline validation before 650M |
+| ESM-2 650M (competition model) | +0.08–0.12 | 60h | Main model, multi-GPU setup |
+| Simple ensemble (KNN + ESM-650M) | +0.02–0.04 | 1h | Weighted average |
 
-Recommended order: Propagation → Thresholds → Ensemble → Larger model.
+Recommended order: Propagation (Week 1) → 150M validation (Week 2) → 650M training (Week 3-5) → Ensemble + tuning (Week 6-7).
 
 ## 4a. ✅ Progress Checklist
 - [x] Data ingestion (01, 02, 03, 04)
 - [x] Exploratory data analysis (EDA) — DELETED
-- [x] Baselines: Frequency (01) — **Per-aspect CAFA metric implemented**
-- [x] Baselines: KNN (02) — **Per-aspect CAFA metric implemented**
+- [x] Baselines: Frequency (01) — **Per-aspect CAFA metric implemented**  F1: 0.1619
+- [x] Baselines: KNN (02) — **Per-aspect CAFA metric implemented** F1: 0.2520
 - [x] Baselines: MLP — SKIPPED (underperformed KNN)
 - [x] Fine-tuning pipeline (ESM-2 8M) (03) — **Per-aspect CAFA metric implemented**
 - [x] Threshold optimisation (global sweep) (03)
 - [x] Asymmetric loss integration (03)
 - [x] **Per-aspect evaluation (MF/BP/CC split)** — Competition metric now correctly implemented in ALL notebooks
-- [x] Label propagation (ancestor add) (04) — **Per-aspect CAFA metric implemented**
-- [ ] Per-aspect thresholds (MF/BP/CC) (04 - to add) — **Evaluation ready, need separate threshold tuning**
-- [ ] Simple ensemble (KNN + ESM) (05 - new notebook)
-- [ ] Larger backbone (ESM-2 35M) (03 - modify MODEL_NAME)
+- [x] Label propagation (ancestor add) (04) — **FAILED: -15% F1 with KNN (error amplification)**
+- [x] Per-aspect thresholds (MF/BP/CC) (04) — **DONE: MF=0.40, BP=0.20, CC=0.40 → F1=0.2579**
+- [ ] ESM-2 150M validation (1 epoch) (03 - modify MODEL_NAME to facebook/esm2_t30_150M_UR50D)
+- [ ] ESM-2 650M training (03 - modify MODEL_NAME to facebook/esm2_t33_650M_UR50D, implement multi-GPU)
+- [ ] Simple ensemble (KNN + ESM-650M) (05 - new notebook)
 - [ ] Expand GO vocabulary (10k terms) (03 - modify VOCAB_SIZE)
-- [ ] Increase max sequence length (1024 residues) (03 - modify max_length)
+- [ ] Increase max sequence length (448→1024 residues) (03 - modify max_length)
 - [ ] Evolutionary features (MSA / PSSM) (06 - future)
 - [ ] Structure features (AlphaFold embeddings) (06 - future)
 - [ ] Domain features (Pfam) (06 - future)
@@ -91,8 +95,8 @@ Finding best confidence cutoff for predictions across all terms. Like calibratin
 **Asymmetric loss integration** ✅  
 Down-weighting easy negatives, focusing on hard positives. Like spending investigation time on unclear cases, not obvious innocents — handles extreme imbalance (F1 0.18→0.23, +29%).
 
-**Label propagation** (ancestor propagation) ✅  
-If you predict a very specific term, auto-add its broader parents. Like saying "Golden Retriever" implies "Dog" → painless lift (+0.02–0.04).
+**Label propagation** (ancestor propagation) ❌ FAILED  
+If you predict a very specific term, auto-add its broader parents. Like saying "Golden Retriever" implies "Dog". **Does NOT work with KNN** — predictions are too noisy (~60-70% accuracy), so propagation amplifies errors up the hierarchy. Result: -15% F1. May help with high-accuracy deep learning models (>90% accuracy).
 
 **Per-aspect evaluation** ✅  
 Competition metric: compute F1 separately for MF, BP, CC, then average the three. Not a single F1 across all terms. Kaggle does this automatically; local validation must match. Now correctly implemented in notebooks 01-02.
@@ -134,13 +138,14 @@ Drill on the mistakes you keep making. Like flashcards of the ones you get wrong
 Trust high-quality annotations more. Like weighting eyewitnesses over rumours — reduces noise (+0.01–0.03).
 
 ---
-## 5. 🔮 Strategic Roadmap (Condensed)
-| Tier | Goal | Feature Set | Est. F1 Gain |
-|------|------|-------------|--------------|
-| Core | 0.25–0.27 | Propagation + thresholds + ensemble | +0.04–0.06 |
-| Growth | 0.30 | Larger model + 10k terms + 1024 tokens | +0.05–0.07 |
-| Advanced | 0.35 | Multi-modal (MSA, Pfam, structure) | +0.07–0.10 |
-| Frontier | 0.40+ | GO embeddings + hierarchy loss + hard negatives | +0.05–0.07 |
+## 5. 🔮 Strategic Roadmap (2-Month GPU Timeline)
+| Tier | Goal | Feature Set | Timeline | Est. F1 Gain |
+|------|------|-------------|----------|-----------|
+| Week 1 | 0.26 | KNN + Aspect-specific thresholds | ✅ Done | F1=0.2579 |
+| Week 2-3 | 0.34–0.37 | ESM-2 150M (validation) | 4h | +0.06–0.09 |
+| Week 4-5 | 0.38–0.40 | ESM-2 650M (main model) | 60h | +0.08–0.12 |
+| Week 6-7 | 0.40–0.42 | Ensemble + per-aspect thresholds + calibration | 8h | +0.02–0.04 |
+| Week 8 (optional) | 0.42+ | GO embeddings / hierarchy loss / MSA features | 20h | +0.02–0.03 |
 
 ---
 ## 6. 🐛 Issues Solved
@@ -149,6 +154,9 @@ Trust high-quality annotations more. Like weighting eyewitnesses over rumours �
 | F1 = 0.0000 | Threshold 0.5 too high | Grid search thresholds | F1 → 0.1806 |
 | Poor focus on positives | BCE treats all negatives equally | AsymmetricLoss | F1 → 0.2331 |
 | Loss explosion (446) | `.sum()` in custom loss | Use `.mean()` | Stable training |
+| Evaluation mismatch (04 vs 02) | Matrix-based eval differed from DataFrame | Use exact KNN notebook function | F1 synced at 0.2520 |
+| Label propagation hurt F1 | KNN predictions too noisy for propagation | Skip propagation for KNN | Baseline preserved |
+| BP threshold suboptimal | Global 0.40 too high for BP | Per-aspect: BP=0.20 | F1 0.252→0.2579 |
 
 ---
 ## 7. 💡 Lessons Learned
@@ -157,6 +165,9 @@ Trust high-quality annotations more. Like weighting eyewitnesses over rumours �
 - Fine-tuning backbone > frozen embeddings + shallow head.  
 - Early stopping protects against plateau wastage.  
 - Homology (KNN) remains a strong complementary signal.
+- **Label propagation requires high-accuracy base predictions (>90%).** KNN at ~60-70% accuracy → propagation amplifies errors.
+- **Per-aspect thresholds matter:** BP needs lower threshold (0.20) than MF/CC (0.40).
+- **Always verify evaluation consistency** between notebooks before comparing results.
 
 ---
 ## 8. 🗂️ Key Files (Active Set)
@@ -175,30 +186,38 @@ Trust high-quality annotations more. Like weighting eyewitnesses over rumours �
 Next upgrades: Per-aspect thresholds, per-term dynamic thresholding, calibration (temperature / isotonic).
 
 ---
-## 10. 🚀 Next Concrete Steps
-1. Implement `src/inference/propagation.py` (ancestor add).  
-2. Modify evaluation to compute MF/BP/CC optimal thresholds.  
-3. Add `src/inference/ensemble.py` combining KNN + ESM outputs.  
-4. Trial larger model (start with 35M param).  
+## 10. 🚀 Next Concrete Steps (Immediate)
+1. ~~Complete notebook 04 (label propagation)~~ — ✅ Done, propagation doesn't help KNN.
+2. Re-evaluate ESM-2 8M with per-aspect metric (may beat KNN's 0.2579).
+3. Scale to ESM-2 150M for 1 epoch (pipeline validation) — 4h.  
+4. Implement ESM-2 650M training:
+   - Update MODEL_NAME to `facebook/esm2_t33_650M_UR50D`
+   - Set batch_size=1, gradient_accumulation=16
+   - Consider multi-GPU DDP if 2+ GPUs available
+   - Add mixed precision (fp16) for memory efficiency
+   - Train full 10 epochs — ~60h GPU time
+5. Build ensemble (KNN + ESM-650M weighted average) — 1h.  
+6. Tune per-aspect thresholds (MF/BP/CC separate) — 1h.  
 
 ---
-## 11. 📈 Success Targets
-| Milestone | Success Criteria |
-|-----------|------------------|
-| Propagation | F1 ≥ 0.25 |
-| Ensemble | F1 ≥ 0.26 |
-| Larger Model | F1 ≥ 0.28–0.30 |
-| Multi-modal MVP | F1 ≥ 0.33+ |
-| Hierarchy-aware & embeddings | F1 ≥ 0.35–0.40 |
+## 11. 📈 Success Targets (2-Month Timeline)
+| Milestone | Success Criteria | Week |
+|-----------|------------------|------|
+| KNN + Aspect Thresholds | F1 = 0.2579 ✅ | 1 |
+| ESM-2 150M (validation) | F1 ≥ 0.34 | 2-3 |
+| ESM-2 650M (main) | F1 ≥ 0.38 | 4-5 |
+| Ensemble + Tuning | F1 ≥ 0.40 | 6-7 |
+| Optional Polish | F1 ≥ 0.42 | 8 |
 
 ---
 ## 12. ❓ Open Decisions
 | Decision | Options | Recommendation |
 |----------|---------|----------------|
-| Backbone scale | 35M vs 150M | Start 35M (memory safe) |
-| Term count | 5k vs 10k vs 15k | Move to 10k first |
-| Sequence length | 512 vs 1024 | Increase with batch size reduction |
-| Ensemble strategy | Simple avg vs stacking | Begin with weighted avg |
+| Backbone scale | 150M vs 650M | 150M for 1-epoch validation, then 650M |
+| Multi-GPU strategy | DDP vs DataParallel | DDP (2 devices, batch_size=1, grad_accum=16) |
+| Term count | 5k vs 10k vs 15k | Start 10k with 650M |
+| Sequence length | 512 vs 1024 | Start 448 with 650M, expand to 1024 if memory allows |
+| Ensemble strategy | Simple avg vs stacking | Weighted avg (70% ESM-650M + 30% KNN) |
 
 ---
 ## 13. 🧠 Future Enhancements (Outline)
@@ -212,14 +231,16 @@ Next upgrades: Per-aspect thresholds, per-term dynamic thresholding, calibration
 ## 14. 🔍 Risk Check
 | Risk | Mitigation |
 |------|------------|
-| GPU memory with larger model | Gradient accumulation + mixed precision |
-| MSA generation cost | Subsample or on-demand compute |
+| GPU memory with 650M model | batch_size=1 + grad_accum=16 + mixed precision fp16 |
+| 650M training time (60h) | Use 150M validation run first to catch bugs in 4h |
+| Multi-GPU setup complexity | Optional — single GPU works, DDP only if 2+ available |
+| MSA generation cost | Skip for initial 650M run, add only if time remains |
 | Ontology misuse | Validate propagation coverage + ancestor integrity |
-| Overfitting with bigger model | Maintain validation discipline + early stop |
+| Overfitting with 650M | Early stopping + validation monitoring |
 
 ---
 ## 15. 🏁 Summary in One Line
-We have a healthy fine-tuning pipeline at F1 0.2331; apply label propagation + aspect thresholds + ensemble next to break 0.25, then scale model and ontology awareness for 0.30+.
+KNN baseline with aspect-specific thresholds achieves F1=0.2579 (propagation failed). Next: re-evaluate ESM-2 with per-aspect metric, then scale to 150M/650M over 2-month GPU timeline.
 
 ---
 **If happy with this consolidation, I can remove `ROADMAP.md`, `SUMMARY.md`, `PROGRESS_TRACKER.md` and keep only `PLAN.md` + `OVERVIEW.md`.**

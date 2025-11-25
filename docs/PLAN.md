@@ -1,7 +1,7 @@
 # 🎯 CAFA-6 Protein Function Prediction - BUILD PLAN
 
-**Last Updated:** November 23, 2025  
-**Current Status:** Phase 2 Complete - ESM-2 Fine-Tuning Working (F1 = 0.2331)
+**Last Updated:** November 25, 2025  
+**Current Status:** Phase 2 Complete - KNN with aspect-specific thresholds (F1 = 0.2579)
 
 ---
 
@@ -104,15 +104,16 @@
 
 **CRITICAL UPDATE (Nov 23):** Discovered that competition uses **per-aspect evaluation** (MF, BP, CC computed separately, then averaged). All previous F1 scores were computed incorrectly by mixing aspects. Notebooks 01-02 now fixed with correct CAFA metric. Need to re-run notebook 03-04 with per-aspect evaluation to get true baseline scores.
 
-### Priority 1: Label Propagation ✅ COMPLETE
+### Priority 1: Label Propagation ❌ FAILED
 **Expected Impact:** +0.02-0.04 F1  
+**Actual Impact:** **-15% F1** (0.2579 → 0.2181)
 **Effort:** Low  
-**Risk:** Low
+**Risk:** High (with noisy predictions)
 
-**Status:** Module built (`src/inference/propagation.py`), notebook created (`notebooks/label_propagation.ipynb`)
+**Status:** Tested in `notebooks/04_label_propagation.ipynb` — DOES NOT WORK with KNN.
 
-**Why This Works:**
-If model predicts "DNA-binding transcription factor activity" (child), it MUST also predict "transcription factor activity" (parent). Competition scoring penalises violations.
+**Why It Failed:**
+KNN predictions are ~60-70% accurate at best. Propagating errors to parent terms amplifies mistakes across the GO hierarchy. Propagation requires >90% base accuracy to be beneficial. May work with deep learning models (ESM-2 650M) but not with KNN.
 
 **Implementation:**
 ```python
@@ -373,8 +374,49 @@ sampler = WeightedRandomSampler(
 
 ## 5. 📤 Submission Pipeline
 
-**Status:** Ready to implement  
-**Timeline:** 1-2 days
+**Status:** ✅ Complete — `notebooks/05_submission_generation.ipynb`  
+**Format:** CAFA-6 Official TSV
+
+### Official Format Requirements (from competition docs)
+
+| Requirement | Value |
+|-------------|-------|
+| **File format** | TSV (tab-separated) |
+| **Header** | None (no header row) |
+| **Columns** | `EntryID<tab>GO_term<tab>confidence` |
+| **Confidence range** | (0, 1.000] — zeros NOT allowed |
+| **Significant figures** | Up to 3 (e.g., 0.931, 0.54, 0.989) |
+| **Max terms/protein** | 1500 (MF+BP+CC combined) |
+| **GO term format** | GO:XXXXXXX (7 digits) |
+| **Propagation** | Auto-handled by organisers if missing |
+
+### Example Submission (from official docs)
+```
+P9WHI7   GO:0009274   0.931   
+P9WHI7   GO:0071944   0.540
+P9WHI7   GO:0005575   0.324
+P04637   GO:1990837   0.23
+P04637   GO:0031625   0.989
+P04637   GO:0043565   0.64
+```
+
+### Current Best Configuration
+```python
+# Aspect-specific thresholds (from notebook 04)
+THRESHOLDS = {
+    'MF': 0.40,
+    'BP': 0.20,
+    'CC': 0.40
+}
+MAX_TERMS_PER_PROTEIN = 1500
+
+# Validation F1: 0.2579
+```
+
+### Key Notes
+1. **Label propagation NOT required** — organisers auto-propagate: "predictions will be recursively propagated by assigning each parent term a score that is the maximum score among its children's scores"
+2. **Score of 0 not allowed** — omit pairs with zero confidence
+3. **Proteins not listed** — assumed to have all predictions = 0
 
 ### Step 1: Generate Test Predictions
 
@@ -405,134 +447,89 @@ with torch.no_grad():
 predictions = np.vstack(all_preds)  # Shape: (n_test, 5000)
 ```
 
-### Step 2: Apply Threshold & Filter
+### Step 2: Apply Aspect-Specific Thresholds
 
 **Code:**
 ```python
-def filter_predictions(probs, threshold=0.40, max_per_protein=1500):
-    filtered = []
+def apply_aspect_thresholds(pred_df, term_to_aspect, thresholds):
+    """Filter predictions using aspect-specific thresholds."""
+    aspect_map = {'F': 'MF', 'P': 'BP', 'C': 'CC'}
     
-    for i, protein_probs in enumerate(probs):
-        # Filter by threshold
-        above_thresh = protein_probs >= threshold
-        confident_indices = np.where(above_thresh)[0]
-        confident_probs = protein_probs[confident_indices]
-        
-        # Sort and limit
-        sorted_idx = np.argsort(confident_probs)[::-1]
-        top_indices = confident_indices[sorted_idx[:max_per_protein]]
-        top_probs = confident_probs[sorted_idx[:max_per_protein]]
-        
-        filtered.append((top_indices, top_probs))
+    pred_df['aspect'] = pred_df['term'].map(term_to_aspect).map(aspect_map)
+    pred_df['threshold'] = pred_df['aspect'].map(thresholds)
     
-    return filtered
+    # Filter by aspect-specific threshold
+    filtered = pred_df[pred_df['probability'] >= pred_df['threshold']]
+    return filtered[['EntryID', 'term', 'probability']]
 ```
 
-### Step 3: Label Propagation
+### Step 3: Limit Terms Per Protein
 
 **Code:**
 ```python
-import obonet
-import networkx as nx
-
-# Load ontology
-go_graph = obonet.read_obo('Train/go-basic.obo')
-
-def propagate_to_ancestors(predictions, go_graph, vocab):
-    propagated = []
-    
-    for protein_preds in predictions:
-        term_confidences = {}  # term_id -> max_confidence
-        
-        for term_idx, confidence in protein_preds:
-            term_id = vocab[term_idx]  # e.g., 'GO:0003677'
-            term_confidences[term_id] = max(
-                term_confidences.get(term_id, 0), 
-                confidence
-            )
-            
-            # Add ancestors
-            if term_id in go_graph:
-                ancestors = nx.ancestors(go_graph, term_id)
-                for ancestor in ancestors:
-                    term_confidences[ancestor] = max(
-                        term_confidences.get(ancestor, 0),
-                        confidence
-                    )
-        
-        propagated.append(term_confidences)
-    
-    return propagated
+def limit_terms_per_protein(pred_df, max_terms=1500):
+    """Keep top N terms per protein by confidence."""
+    sorted_df = pred_df.sort_values(
+        ['EntryID', 'probability'], 
+        ascending=[True, False]
+    )
+    return sorted_df.groupby('EntryID').head(max_terms)
 ```
 
-### Step 4: Format Submission
-
-**Format:**
-```
-A0A0C5B5G6	GO:0005515	0.856
-A0A0C5B5G6	GO:0003677	0.782
-A0A0C5B5G6	GO:0006281	0.654
-...
-```
+### Step 4: Format & Save Submission
 
 **Code:**
 ```python
-import pandas as pd
-
-def create_submission_file(protein_ids, predictions, vocab, output_path):
-    rows = []
+def create_submission(pred_df, output_path):
+    """Create CAFA-6 official format submission."""
+    submission = pred_df.rename(columns={
+        'term': 'GO_term', 
+        'probability': 'confidence'
+    })
     
-    for protein_id, term_confidences in zip(protein_ids, predictions):
-        for term_id, confidence in term_confidences.items():
-            rows.append({
-                'protein_id': protein_id,
-                'go_term': term_id,
-                'confidence': f"{confidence:.3f}"
-            })
+    # Round to 3 decimal places, remove zeros
+    submission['confidence'] = submission['confidence'].round(3)
+    submission = submission[submission['confidence'] > 0]
     
-    df = pd.DataFrame(rows)
-    df.to_csv(output_path, sep='\t', header=False, index=False)
-    print(f"Saved submission to {output_path}")
-    print(f"Total predictions: {len(df)}")
-    print(f"Proteins: {df['protein_id'].nunique()}")
-    print(f"Avg terms per protein: {len(df) / df['protein_id'].nunique():.1f}")
-
-# Usage
-create_submission_file(
-    test_protein_ids,
-    propagated_predictions,
-    vocab,
-    'submissions/submission_v1.tsv'
-)
+    # Save as TSV (no header)
+    submission[['EntryID', 'GO_term', 'confidence']].to_csv(
+        output_path, 
+        sep='\t', 
+        header=False, 
+        index=False
+    )
 ```
 
 ### Step 5: Validate Submission
 
-**Validation Script:**
+**Code:**
 ```python
 def validate_submission(filepath):
     df = pd.read_csv(filepath, sep='\t', header=None, 
-                     names=['protein_id', 'go_term', 'confidence'])
+                     names=['EntryID', 'GO_term', 'confidence'])
     
     # Check format
     assert len(df.columns) == 3, "Must have 3 columns"
     
-    # Check confidence range
+    # Check confidence range (0, 1] — zeros NOT allowed
     df['confidence'] = df['confidence'].astype(float)
-    assert df['confidence'].between(0, 1, inclusive='right').all(), \
-        "Confidence must be in (0, 1]"
+    assert df['confidence'].min() > 0, "Confidence must be > 0"
+    assert df['confidence'].max() <= 1, "Confidence must be <= 1"
     
     # Check max per protein
-    terms_per_protein = df.groupby('protein_id').size()
+    terms_per_protein = df.groupby('EntryID').size()
     assert terms_per_protein.max() <= 1500, \
         f"Max 1500 terms per protein (found {terms_per_protein.max()})"
     
+    # Check GO term format
+    assert df['GO_term'].str.match(r'^GO:\d{7}$').all(), \
+        "Invalid GO term format"
+    
     print("✅ Submission is valid!")
     print(f"  Total rows: {len(df):,}")
-    print(f"  Unique proteins: {df['protein_id'].nunique():,}")
-    print(f"  Unique GO terms: {df['go_term'].nunique():,}")
+    print(f"  Unique proteins: {df['EntryID'].nunique():,}")
+    print(f"  Unique GO terms: {df['GO_term'].nunique():,}")
     print(f"  Avg terms/protein: {terms_per_protein.mean():.1f}")
-    print(f"  Median confidence: {df['confidence'].median():.3f}")
 
 validate_submission('submissions/submission_v1.tsv')
 ```
@@ -545,17 +542,19 @@ validate_submission('submissions/submission_v1.tsv')
 
 | Model | F1 Score | Precision | Recall | Threshold | Status |
 |-------|----------|-----------|--------|-----------|--------|
-| Frequency Baseline | 0.1412 | - | - | N/A | ✅ |
-| Embedding KNN | 0.1776 | - | - | N/A | ✅ |
+| Frequency Baseline | 0.1619 | - | - | N/A | ✅ |
+| KNN (single threshold) | 0.2520 | - | - | 0.40 | ✅ |
+| **KNN (aspect-specific)** | **0.2579** | - | - | MF=0.40, BP=0.20, CC=0.40 | 🏆 **BEST** |
+| KNN + Propagation | 0.2181 | - | - | MF=0.40, BP=0.20, CC=0.40 | ❌ Failed |
 | MLP (Frozen) | 0.1672 | - | - | 0.10 | ✅ |
 | ESM-2 (BCE) | 0.1806 | 0.1952 | 0.2449 | 0.10 | ✅ |
-| **ESM-2 (Asym Loss)** | **0.2331** | **0.3397** | **0.2379** | **0.40** | 🏆 **BEST** |
+| ESM-2 (Asym Loss) | 0.2331 | 0.3397 | 0.2379 | 0.40 | Needs re-eval |
 
 ### Roadmap to Competitive Performance
 
 | Target F1 | Improvements Needed | Timeline |
 |-----------|---------------------|----------|
-| 0.25 | Label propagation + per-aspect thresholds | 3 hours |
+| 0.26 | Per-aspect thresholds ✅ DONE | — |
 | 0.27 | + Larger model (35M) or ensemble | 12 hours |
 | 0.30 | + 10k terms + longer sequences | 2 days |
 | 0.35 | + Multi-modal fusion (MSA + structure) | 2 weeks |
