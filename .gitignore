@@ -40,3 +40,14 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Models artifacts and large checkpoint files
+# Ignore model checkpoints and predictions to avoid committing large binaries
+models/
+*.pt
+*.bin
+*.npy
+*.pth
+*.ckpt
+best_model/
+*/best_model/

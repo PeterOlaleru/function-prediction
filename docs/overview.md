@@ -61,6 +61,7 @@ Recommended order: Propagation (Week 1) → 150M validation (Week 2) → 650M tr
 - [ ] ESM-2 150M validation (1 epoch) (03 - modify MODEL_NAME to facebook/esm2_t30_150M_UR50D)
 - [ ] ESM-2 650M training (03 - modify MODEL_NAME to facebook/esm2_t33_650M_UR50D, implement multi-GPU)
 - [ ] Simple ensemble (KNN + ESM-650M) (05 - new notebook)
+- [x] CAFA5-style stacker prototype (min/max GO propagation + averaging) — added `notebooks/06_cafa5_style_stack.ipynb`
 - [ ] Expand GO vocabulary (10k terms) (03 - modify VOCAB_SIZE)
 - [ ] Increase max sequence length (448→1024 residues) (03 - modify max_length)
 - [ ] Evolutionary features (MSA / PSSM) (06 - future)

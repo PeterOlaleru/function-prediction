@@ -40,3 +40,12 @@ Act as intellectual sparring partner:
 
 **Never** leave checkboxes stale after finishing work.
 
+## Files
+train_sequences.fasta – amino acid sequences for proteins in the training set
+train_terms.tsv – the training set of proteins and corresponding annotated GO terms
+train_taxonomy.tsv – taxon IDs for proteins in the training set
+go-basic.obo – ontology graph structure
+testsuperset.fasta – amino acid sequences for proteins on which predictions should be made
+testsuperset-taxon-list.tsv – taxon IDs for proteins in the test superset
+IA.tsv – information accretion for each term (used to weight precision and recall)
+sample_submission.tsv – sample submission file in the correct format
