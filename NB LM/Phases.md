@@ -15,7 +15,7 @@ Create two specific Python environments:
 Load the configuration file (`config.yaml`) and ensure all necessary input data are present:
 - CAFA training and test data
 - Sample submission file
-- **Critical**: Information Accretion weights (`IA.txt`)
+- **Critical**: Information Accretion weights (`IA.tsv`)
 
 ---
 
@@ -35,7 +35,7 @@ Parse FASTA files containing training and test sequences and save in `.feather` 
    - NaN rate for each term
 
 ### IA Weight Utilization
-The IA weights (`IA.txt`) determine the competition's scoring metric:
+The IA weights (`IA.tsv`) determine the competition's scoring metric:
 - Heavily rewards rare, specific GO terms
 - Must be loaded and utilized as class weights during base model training
 - Prioritizes learning difficult, high-value terms in DNNs using `class_weight` argument
