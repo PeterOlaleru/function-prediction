@@ -81,10 +81,10 @@ Deliverables:
 - [x] Colab notebooks normalised to Jupyter schema (cell `metadata.id`, `metadata.language`, `nbformat` keys)
 - [x] Colab notebook: single-file text + TF-IDF + solution handoff (`notebooks/Colab_03_text_plus_solution.ipynb`)
 - [x] Colab notebook: all-in-one (solution + text corpus + TF-IDF inline, no script calls) (`notebooks/Colab_04_all_in_one.ipynb`)
-- [x] Option B: strict mode + Kaggle API dataset publishing integrated into `Colab_04` (requires `KAGGLE_API_TOKEN`)
+- [x] Option B: strict mode + Kaggle API dataset publishing integrated into `Colab_04` (requires `KAGGLE_USERNAME` + `KAGGLE_KEY`)
 - [x] Colab_04: artefact manifest diagnostics cell (sizes + Option B required artefacts sanity check)
 - [x] Colab_04: Kaggle Dataset-backed milestone checkpointing (`STORE.pull()` + `STORE.push(stage, ...)`)
-- [x] Colab_04: unified secrets getter (env → Kaggle Secrets → Colab `userdata`) for token + dataset ID
+- [x] Colab_04: unified secrets getter (env → Kaggle Secrets → Colab `userdata`) for Kaggle creds + dataset ID
 - [x] Runbook: resumable runs across Kaggle/Colab/local (`docs/RUNBOOK_CHECKPOINTS.md`)
 - [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
 - [ ] Phase 4: strict min/max propagation + final submission generation

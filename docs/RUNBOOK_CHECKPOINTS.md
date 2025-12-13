@@ -24,8 +24,12 @@ Where do you find `CAFA_CHECKPOINT_DATASET_ID`?
    - On first publish, the notebook will attempt to create/version that dataset via the Kaggle API.
 
 2) Provide auth (API-only):
-- Set `KAGGLE_API_TOKEN=KGAT_...` via **Kaggle Secrets** or **Colab secrets**
+- Kaggle CLI publishing/downloading requires Kaggle API credentials (from `kaggle.json`):
+   - Set `KAGGLE_USERNAME=<your-username>` and `KAGGLE_KEY=<your-key>` via **Kaggle Secrets** or **Colab secrets**
    - The notebook will try, in order: env var → Kaggle Secrets → Colab `userdata`.
+
+Back-compat:
+- `KAGGLE_API_TOKEN` is only supported if it contains the full `kaggle.json` JSON payload or `username:key`.
 
 Note: `CAFA_CHECKPOINT_DATASET_ID` is resolved the same way (env var → Kaggle Secrets → Colab `userdata`).
 
@@ -44,7 +48,8 @@ Steps:
    - The CAFA-6 competition dataset
    - (Optional but recommended) your checkpoint dataset `<user>/<slug>`
 3) Add Secrets:
-   - `KAGGLE_API_TOKEN` = `KGAT_...`
+   - `KAGGLE_USERNAME` = `<your-username>`
+   - `KAGGLE_KEY` = `<your-key>`
    - (Optional) `CAFA_CHECKPOINT_DATASET_ID` = `<user>/<slug>`
 4) Open and run [notebooks/Colab_04_all_in_one.ipynb](../notebooks/Colab_04_all_in_one.ipynb).
 
@@ -65,7 +70,7 @@ Steps:
    - Mount Drive and copy the repo folder there
    - Or `git clone` your repo if it contains the competition files
 2) Set secrets/env vars:
-   - `KAGGLE_API_TOKEN` and `CAFA_CHECKPOINT_DATASET_ID` (either as env vars or Colab `userdata`).
+   - `KAGGLE_USERNAME`, `KAGGLE_KEY`, and `CAFA_CHECKPOINT_DATASET_ID` (either as env vars or Colab `userdata`).
 3) Run [notebooks/Colab_04_all_in_one.ipynb](../notebooks/Colab_04_all_in_one.ipynb).
 
 Recommended split (fastest wall-clock):
@@ -83,7 +88,8 @@ Steps:
    - `pip install -r requirements.txt`
 3) Set env vars (PowerShell example):
    - `$env:CAFA_CHECKPOINT_DATASET_ID = "<user>/<slug>"`
-   - `$env:KAGGLE_API_TOKEN = "KGAT_..."`
+   - `$env:KAGGLE_USERNAME = "<your-username>"`
+   - `$env:KAGGLE_KEY = "<your-key>"`
 4) Run the notebook.
 
 Tip:
@@ -142,7 +148,7 @@ Smallest sensible “sanity run” (CPU is fine):
 - Cell 12 (Manifest diagnostics)
 
 If you want to publish from local:
-- Ensure `KAGGLE_API_TOKEN` is set, then run the stage cells you care about; they will call `STORE.push(...)`.
+- Ensure `KAGGLE_USERNAME` and `KAGGLE_KEY` are set, then run the stage cells you care about; they will call `STORE.push(...)`.
 
 ---
 ## Dependencies (what depends on what)
@@ -179,4 +185,4 @@ If your checkpoint dataset is empty (first ever run), you **do not wait** — yo
 
 This is usually an input-mount/versioning issue:
 - If Kaggle has your checkpoint dataset attached as an **input**, it will only see the version available at notebook start; restart the Kaggle session to pick up the latest.
-- If you want to always pull the latest without restarting, don’t attach the dataset as an input and let `STORE.pull()` download via the Kaggle API (requires internet + `KAGGLE_API_TOKEN`).
+- If you want to always pull the latest without restarting, don’t attach the dataset as an input and let `STORE.pull()` download via the Kaggle API (requires internet + Kaggle creds).
