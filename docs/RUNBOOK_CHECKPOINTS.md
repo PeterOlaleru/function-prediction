@@ -56,6 +56,7 @@ Steps:
 Notes:
 - If the checkpoint dataset is attached as an input, `STORE.pull()` uses the mounted copy (fast, no network).
 - If it is not attached, `STORE.pull()` will try the Kaggle API download (needs internet + auth).
+- If you hit **HTTP 403 Forbidden** on pull, it almost always means the dataset is **private** or not shared with the Kaggle account running the notebook. The pragmatic fix is to **attach the checkpoint dataset as a Notebook Input**, or make/share the dataset.
 
 Pip note (Kaggle):
 - Kaggle images come with many preinstalled packages. Blindly running `pip install -r requirements.txt` can upgrade core deps and produce resolver “dependency conflicts” warnings.
