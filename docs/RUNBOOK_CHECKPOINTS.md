@@ -13,7 +13,7 @@ No other publishing flow should be used.
 
 1) Choose your checkpoint dataset:
 - Set `CAFA_CHECKPOINT_DATASET_ID=<kaggle-username>/<dataset-slug>`
-- Optional: set `CAFA_CHECKPOINT_DATASET_TITLE` (defaults to `CAFA6 Checkpoints`)
+- Set `CAFA_CHECKPOINT_DATASET_TITLE` if you want to override the title (defaults to `CAFA6 Checkpoints`)
 
 Where do you find `CAFA_CHECKPOINT_DATASET_ID`?
 - It’s just the Kaggle Dataset identifier in the URL:
@@ -33,7 +33,7 @@ Back-compat:
 
 Note: `CAFA_CHECKPOINT_DATASET_ID` is resolved the same way (env var → Kaggle Secrets → Colab `userdata`).
 
-3) Optional controls:
+3) Controls (defaults shown):
 - `CAFA_CHECKPOINT_PULL=1` (default) to pull on startup
 - `CAFA_CHECKPOINT_PUSH=1` (default) to publish milestones
 - `CAFA_CHECKPOINT_REQUIRED=1` (default) to fail-fast if checkpoints are not accessible (set to `0` for best-effort warning-only pulls)
@@ -47,11 +47,11 @@ Steps:
 1) Create a Kaggle Notebook with GPU enabled.
 2) Add inputs:
    - The CAFA-6 competition dataset
-   - (Optional but recommended) your checkpoint dataset `<user>/<slug>`
+   - Your checkpoint dataset `<user>/<slug>` (recommended: attach as Input so `STORE.pull()` uses the mount)
 3) Add Secrets:
    - `KAGGLE_USERNAME` = `<your-username>`
    - `KAGGLE_KEY` = `<your-key>`
-   - (Optional) `CAFA_CHECKPOINT_DATASET_ID` = `<user>/<slug>`
+   - `CAFA_CHECKPOINT_DATASET_ID` = `<user>/<slug>`
 4) Open and run [notebooks/Colab_04_all_in_one.ipynb](../notebooks/Colab_04_all_in_one.ipynb).
 
 Notes:
@@ -86,7 +86,7 @@ Recommended split (fastest wall-clock):
 ---
 ## 3) Local (Windows)
 
-Goal: iterate/debug without Kaggle constraints, optionally publish checkpoints.
+Goal: iterate/debug without Kaggle constraints, and publish checkpoints via the Kaggle API when needed.
 
 Steps:
 1) Ensure the repo root contains `Train/`, `Test/`, `IA.tsv`, `sample_submission.tsv`.
@@ -120,14 +120,16 @@ This is the concrete “what to run where” mapping for [notebooks/Colab_04_all
 
 ### Kaggle (recommended finishing environment)
 
-Typical “resume + finish” run (GPU on):
+Required “resume + finish” run (GPU on):
 - Cell 2 (Install dependencies)
 - Cell 3 (Setup + `STORE.pull()`)
 - Cell 5 (Parse/structuring + hierarchy)
+- Cell 6 (Inline corpus builder code; labelled `# CELL 05`)
+- Cell 7 (Run: build EntryID→text corpus; labelled `# CELL 06`)
 - Cell 9–12 (TF‑IDF + external GOA + propagation + manifest diagnostics)
 - Cell 16–19 (Level‑1 → stacker → post‑processing → submission)
 
-Optional:
+Not required for a valid CAFA submission:
 - Cell 20 (Free text prediction)
 
 Notes:
@@ -142,9 +144,8 @@ Run embeddings and publish checkpoints, then stop:
 - Cell 14 (T5 embeddings)
 - Cell 15 (ESM2 embeddings)
 
-Optional (only if you’re generating the TF‑IDF modality on Colab):
-- The EntryID→text corpus build (cells labelled `# CELL 05` and `# CELL 06`) makes outbound requests (UniProt + PubMed) and is often more predictable on Kaggle with Internet enabled.
-- If you still want to do it on Colab: run Cell 6 (labelled `# CELL 05`) then Cell 7 (labelled `# CELL 06`), then continue to the TF‑IDF cell (labelled `# CELL 08`).
+Note:
+- The EntryID→text corpus + TF‑IDF + external GOA steps are treated as required for the strict runbook path; do them on Kaggle.
 
 ### Local (Windows) — debugging/iteration
 
@@ -166,17 +167,16 @@ Key idea: there is no magical background “dataset population”. The checkpoin
 
 - **Stage 01: parsed core** (`WORK_ROOT/parsed/*`) → produced by Cell 5
    - Required by: Cells 6, 8–12, 14–20
-- **Stage 02: entryid→text corpus** (`external/entryid_text.tsv`) → produced by Cell 6
 - **Stage 02: entryid→text corpus** (`external/entryid_text.tsv`) → produced by Cell 7 (labelled `# CELL 06`)
-   - Required by: the TF‑IDF cell (labelled `# CELL 08`)
-- **Stage 03: TF‑IDF text embeddings** (`features/train_embeds_text.npy`, `features/test_embeds_text.npy`, `features/text_vectorizer.joblib`) → produced by Cell 9
-   - Optional for training, but required for **Option B strictness** checks
-- **Stage 04: external GOA priors** (`external/prop_train_no_kaggle.tsv.gz`, `external/prop_test_no_kaggle.tsv.gz`) → produced by Cell 11
-   - Required by: Cell 18 **when** `PROCESS_EXTERNAL=True` (default)
-- **Stage 05: T5 embeddings** (`features/train_embeds_t5.npy`, `features/test_embeds_t5.npy`) → produced by Cell 14
+   - Required by: Cell 9 (TF‑IDF; labelled `# CELL 08`)
+- **Stage 03: TF‑IDF text embeddings** (`features/train_embeds_text.npy`, `features/test_embeds_text.npy`, `features/text_vectorizer.joblib`) → produced by Cell 9 (labelled `# CELL 08`)
+   - Required for the strict runbook path
+- **Stage 04: external GOA priors** (`external/prop_train_no_kaggle.tsv.gz`, `external/prop_test_no_kaggle.tsv.gz`) → produced by Cell 11 (labelled `# CELL 10`)
+   - Required for the strict runbook path
+- **Stage 05: T5 embeddings** (`features/train_embeds_t5.npy`, `features/test_embeds_t5.npy`) → produced by Cell 14 (labelled `# CELL 11`)
    - Required by: Cell 16 (Level‑1) (hard requirement)
 - **Stage 06: ESM2 embeddings** (`features/train_embeds_esm2.npy`, `features/test_embeds_esm2.npy`) → produced by Cell 15
-   - Optional (Level‑1 uses it if present)
+   - Not required (Level‑1 uses it if present)
 - **Stage 07: Level‑1 predictions** (`features/oof_pred_*.npy`, `features/test_pred_*.npy`, `features/top_terms_1500.json`) → produced by Cell 16
    - Required by: Cell 18
 - **Stage 08: stacker predictions** (`features/test_pred_gcn.npy`, `features/top_terms_1500.json`) → produced by Cell 18
