@@ -36,7 +36,7 @@ Note: `CAFA_CHECKPOINT_DATASET_ID` is resolved the same way (env var → Kaggle 
 3) Optional controls:
 - `CAFA_CHECKPOINT_PULL=1` (default) to pull on startup
 - `CAFA_CHECKPOINT_PUSH=1` (default) to publish milestones
-- `CAFA_CHECKPOINT_REQUIRED=0` (default) to treat checkpoint pull failures as warnings (set to `1` to fail-fast)
+- `CAFA_CHECKPOINT_REQUIRED=1` (default) to fail-fast if checkpoints are not accessible (set to `0` for best-effort warning-only pulls)
 
 ---
 ## 1) Kaggle (recommended final consumer)
@@ -143,7 +143,8 @@ Run embeddings and publish checkpoints, then stop:
 - Cell 15 (ESM2 embeddings)
 
 Optional (only if you’re generating the TF‑IDF modality on Colab):
-- Cell 6–8 (EntryID→text corpus + TF‑IDF)
+- The EntryID→text corpus build (cells labelled `# CELL 05` and `# CELL 06`) makes outbound requests (UniProt + PubMed) and is often more predictable on Kaggle with Internet enabled.
+- If you still want to do it on Colab: run Cell 6 (labelled `# CELL 05`) then Cell 7 (labelled `# CELL 06`), then continue to the TF‑IDF cell (labelled `# CELL 08`).
 
 ### Local (Windows) — debugging/iteration
 
@@ -166,7 +167,8 @@ Key idea: there is no magical background “dataset population”. The checkpoin
 - **Stage 01: parsed core** (`WORK_ROOT/parsed/*`) → produced by Cell 5
    - Required by: Cells 6, 8–12, 14–20
 - **Stage 02: entryid→text corpus** (`external/entryid_text.tsv`) → produced by Cell 6
-   - Required by: Cell 9 (TF‑IDF)
+- **Stage 02: entryid→text corpus** (`external/entryid_text.tsv`) → produced by Cell 7 (labelled `# CELL 06`)
+   - Required by: the TF‑IDF cell (labelled `# CELL 08`)
 - **Stage 03: TF‑IDF text embeddings** (`features/train_embeds_text.npy`, `features/test_embeds_text.npy`, `features/text_vectorizer.joblib`) → produced by Cell 9
    - Optional for training, but required for **Option B strictness** checks
 - **Stage 04: external GOA priors** (`external/prop_train_no_kaggle.tsv.gz`, `external/prop_test_no_kaggle.tsv.gz`) → produced by Cell 11
