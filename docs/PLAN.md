@@ -23,6 +23,14 @@ Notes (pragmatic):
 - We are **Kaggle-first**: no external config files are required to run.
 - If you have multiple datasets mounted, set `DATASET_SLUG` inside the notebook.
 
+Checkpointing (resumable across providers):
+- Use a Kaggle Dataset as the canonical artefact store.
+- The notebook pulls checkpoints on startup (`STORE.pull()`) and publishes milestone versions after each stage (`STORE.push(stage, paths)`).
+- Control the target dataset via `CAFA_CHECKPOINT_DATASET_ID` (or `CAFA_KAGGLE_DATASET_ID`) and authenticate via `KAGGLE_API_TOKEN=KGAT_...`.
+
+Runbook:
+- See `docs/RUNBOOK_CHECKPOINTS.md` for the straight-through “run here, resume there” workflow.
+
 ---
 ## Phase 1 — Data artefacts + features
 
@@ -79,6 +87,13 @@ Optional:
 Colab notebooks (offline artefact generation):
 - `notebooks/Colab_01_build_entryid_text_uniprot_pubmed.ipynb` (build `entryid_text.tsv`)
 - `notebooks/Colab_02_generate_optional_embeddings.ipynb` (write `.npy` files under `artefacts_local/artefacts/features/`)
+- `notebooks/Colab_03_text_plus_solution.ipynb` (single notebook: FASTA→feather → corpus → TF-IDF → solution handoff)
+- `notebooks/Colab_04_all_in_one.ipynb` (single notebook: inlines solution + corpus + TF-IDF code; no `!python` calls)
+
+Option B operational note (Kaggle final stop):
+- `notebooks/Colab_04_all_in_one.ipynb` runs in **strict mode** for TF-IDF + external GOA priors and includes an artefact manifest diagnostics cell.
+- Publishing/checkpointing is handled exclusively via `STORE.push(...)` (no duplicated “publish cell” flow).
+- `KAGGLE_API_TOKEN=KGAT_...` (token string) is required when the runtime needs to create/version the checkpoint dataset.
 
 Outputs:
 - An `embeds/` directory with one file per modality (format TBD by implementation).
