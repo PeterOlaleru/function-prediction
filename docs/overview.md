@@ -91,10 +91,12 @@ Deliverables:
 - [x] Colab_04: removed markdown cells + clarified embeddings generator label
 - [x] Colab_04: added CAFA_FORCE_REBUILD + improved Colab dataset discovery (CAFA_DATASET_ROOT)
 - [x] Colab_04: Colab-only Kaggle API auto-download for competition files (CAFA_COLAB_AUTO_DOWNLOAD)
+- [x] Colab_04: Colab competition download unzips via Python (no `kaggle --unzip`)
 - [x] Colab_04: fix Cell 3 diagnostics plot syntax (smoke-check clean)
 - [x] Colab_04: checkpoint publishing uploads folders (--dir-mode zip)
 - [x] Colab_04: checkpoint publishing skips unchanged stages (CAFA_CHECKPOINT_FORCE_PUSH)
 - [x] Colab_04: fix GOA propagation ID matching (normalise UniProt headers)
 - [x] Colab_04: resolve CAFA_FORCE_REBUILD from Kaggle Secrets
+- [x] Colab_04: T5/ESM2 embedding stages push even when reusing existing artefacts
 - [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
 - [ ] Phase 4: strict min/max propagation + final submission generation
