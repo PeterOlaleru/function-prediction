@@ -122,6 +122,8 @@ Tip:
 
 - `WORK_ROOT` is the **published artefact root**.
 - `CACHE_ROOT` is **ephemeral cache** (HF/Torch/etc) and is intentionally excluded from publishing.
+- Checkpoint publishing uses Kaggle CLI `--dir-mode zip`, so datasets may store `parsed/`, `external/`, `features/` as `parsed.zip`, `external.zip`, `features.zip`.
+- The all-in-one notebook automatically unpacks these archives back into folders during `STORE.pull()`.
 - Each milestone cell:
   - checks whether required files exist under `WORK_ROOT`
   - only recomputes if missing
