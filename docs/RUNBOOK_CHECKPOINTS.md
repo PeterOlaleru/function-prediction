@@ -37,6 +37,10 @@ Note: `CAFA_CHECKPOINT_DATASET_ID` is resolved the same way (env var → Kaggle 
 - `CAFA_CHECKPOINT_PULL=1` (default) to pull on startup
 - `CAFA_CHECKPOINT_PUSH=1` (default) to publish milestones
 - `CAFA_CHECKPOINT_REQUIRED=1` (default) to fail-fast if checkpoints are not accessible (set to `0` for best-effort warning-only pulls)
+- `CAFA_FORCE_REBUILD=0` (default) to skip expensive rebuilds if outputs already exist after `STORE.pull()` (set to `1` to force rebuild of corpus/embeddings cells)
+- `CAFA_DATASET_ROOT=<path>` (optional) to explicitly point at the CAFA files root (must contain `Train/`, `Test/`, `IA.tsv`, `sample_submission.tsv`)
+- `CAFA_COLAB_AUTO_DOWNLOAD=0` (default) set to `1` on Colab to auto-download the CAFA competition bundle via Kaggle API if files are missing
+- `CAFA_COLAB_DATA_DIR=/content/cafa6_data` (default) where Colab auto-download writes competition files
 
 ---
 ## 1) Kaggle (recommended final consumer)
@@ -70,6 +74,18 @@ Goal: do the expensive embedding stages on stronger GPUs, then publish and resum
 
 Minimum requirements:
 - You must have the repo contents available (including `Train/`, `Test/`, `IA.tsv`, `sample_submission.tsv`).
+
+If you cloned the repo but it doesn’t contain the competition files (common), pick one:
+
+Option A (explicit path):
+- Put the competition files somewhere accessible (e.g. Drive) and set:
+   - `CAFA_DATASET_ROOT=/content/drive/MyDrive/<your-cafa-folder>`
+
+Option B (API-only, recommended):
+- Set `CAFA_COLAB_AUTO_DOWNLOAD=1` and ensure `KAGGLE_USERNAME` + `KAGGLE_KEY` are present (env vars or Colab `userdata`).
+- The notebook will download/unzip into `CAFA_COLAB_DATA_DIR` during `# CELL 03` and set `CAFA_DATASET_ROOT` automatically.
+
+Note: Kaggle may require you to accept the competition rules on the website once before API downloads work.
 
 Steps:
 1) Get the repo + data into Colab (pick one):
