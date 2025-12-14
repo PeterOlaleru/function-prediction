@@ -29,7 +29,7 @@ Deliverables:
 Deliverables:
 - Parsed sequences + targets in efficient formats.
 - External GO annotations (especially electronic) parsed and hierarchy-propagated.
-- Multimodal embeddings (at minimum: T5 + ESM2 + taxonomy; optional: Ankh/text).
+- Multimodal embeddings (core: T5 + ESM2-650M + ESM2-3B + Ankh + TF-IDF text + taxonomy).
 
 ### Phase 2 — Level-1 models (OOF features)
 Deliverables:
@@ -74,7 +74,7 @@ Deliverables:
 - [x] Kaggle GOA artefact discovery hardened (auto-scan `/kaggle/input`; supports `.tsv` and `.tsv.gz`)
 - [x] Phase 1: external GOA hierarchy propagation (IEA) + injected into GCN stacker inputs
 - [x] Phase 2: train Level-1 models + save OOF predictions (IA-weighted DNN loss + IA-F1 threshold diagnostics)
-- [x] Optional: offline embedding generator supports ESM2-3B + Ankh + 10279D text (TF-IDF)
+- [x] Offline embedding generator supports ESM2-3B + Ankh + 10279D text (TF-IDF)
 - [x] Optional: build `EntryID -> text` corpus from UniProt + PubMed (`scripts/03_build_entryid_text_from_uniprot_pubmed.py`)
 - [x] Colab notebook: build `entryid_text.tsv` (UniProt + PubMed) (`notebooks/Colab_01_build_entryid_text_uniprot_pubmed.ipynb`)
 - [x] Colab notebook: generate optional embeddings artefacts (`notebooks/Colab_02_generate_optional_embeddings.ipynb`)
@@ -93,10 +93,14 @@ Deliverables:
 - [x] Colab_04: Colab-only Kaggle API auto-download for competition files (CAFA_COLAB_AUTO_DOWNLOAD)
 - [x] Colab_04: Colab competition download unzips via Python (no `kaggle --unzip`)
 - [x] Colab_04: fix Cell 3 diagnostics plot syntax (smoke-check clean)
+- [x] Colab_04: fail-fast FASTA readability checks after setup
 - [x] Colab_04: checkpoint publishing uploads folders (--dir-mode zip)
 - [x] Colab_04: checkpoint publishing skips unchanged stages (CAFA_CHECKPOINT_FORCE_PUSH)
 - [x] Colab_04: fix GOA propagation ID matching (normalise UniProt headers)
 - [x] Colab_04: resolve CAFA_FORCE_REBUILD from Kaggle Secrets
 - [x] Colab_04: T5/ESM2 embedding stages push even when reusing existing artefacts
+- [x] Colab_04: ESM2 cell generates ESM2-3B + Ankh (skip-if-exists + checkpoint push)
+- [x] Colab_04: require ESM2-3B + Ankh + taxonomy (fail-fast if missing)
+- [x] Colab_04: split Level-1 training into per-model cells + per-model checkpoint pushes
 - [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
 - [ ] Phase 4: strict min/max propagation + final submission generation

@@ -80,15 +80,18 @@ Risk / sceptic note:
 ### 1.4 Embeddings (start minimal, scale later)
 Minimum recommended modalities:
 - T5 embeddings
-- ESM2 embeddings
+- ESM2 embeddings (650M)
+- ESM2-3B embeddings
+- Ankh embeddings
+- TF-IDF text embeddings (EntryID→text corpus)
 - Taxonomy features from `Train/train_taxonomy.tsv` + `Test/testsuperset-taxon-list.tsv`
 
 Optional:
-- Ankh, text abstract embeddings
+- None for the core pipeline (add only if clearly justified).
 
 Colab notebooks (offline artefact generation):
 - `notebooks/Colab_01_build_entryid_text_uniprot_pubmed.ipynb` (build `entryid_text.tsv`)
-- `notebooks/Colab_02_generate_optional_embeddings.ipynb` (write `.npy` files under `artefacts_local/artefacts/features/`)
+- `notebooks/Colab_02_generate_optional_embeddings.ipynb` (legacy/offline generation of embeddings artefacts)
 - `notebooks/Colab_03_text_plus_solution.ipynb` (single notebook: FASTA→feather → corpus → TF-IDF → solution handoff)
 - `notebooks/Colab_04_all_in_one.ipynb` (single notebook: inlines solution + corpus + TF-IDF code; no `!python` calls)
 
