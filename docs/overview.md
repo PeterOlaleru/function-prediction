@@ -2,7 +2,7 @@
 
 **Date:** 11 Dec 2025  
 **Best validated baseline:** KNN + per-aspect thresholds — F1 = 0.2579 (MF=0.40, BP=0.20, CC=0.40)  
-**Decision:** KNN is not competitive enough → pivot to a CAFA5 Rank-1 style stack (modular Level-1 ensemble → Level-2 GCN stacker → strict GO post-processing).  
+**Decision:** KNN alone is not competitive enough → pivot to a CAFA5 Rank-1 style stack (modular Level-1 ensemble → Level-2 GCN stacker → strict GO post-processing).  
 **Detailed execution:** `docs/PLAN.md`
 
 ---
@@ -106,5 +106,7 @@ Deliverables:
 - [x] Colab_04: PubMed fetch hardened (sanitize invalid XML + retry/backoff + recursive batch split)
 - [x] Colab_04: ProtT5 checkpoint pushes after train and after test (granular, crash-safe)
 - [x] Colab_04: ESM2/ESM2-3B/Ankh checkpoint pushes after train and after test (granular, crash-safe)
+- [x] Phase 2: add KNN as Level-1 model (OOF + test preds) and wire into GCN stacker
+- [x] Colab_04: visual diagnostics for embeddings + Level-1 models (histograms + IA-F1 curves)
 - [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
 - [ ] Phase 4: strict min/max propagation + final submission generation

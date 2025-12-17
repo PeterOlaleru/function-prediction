@@ -110,19 +110,21 @@ Outputs:
 ## Phase 2 — Level-1 models (OOF predictions)
 
 Goal:
-- Train diverse base models and save **OOF predictions** (training features for GCN) and **test predictions**.
 
 Recommended base set (minimum viable):
-- Logistic regression (fast, strong baseline)
-- One small GBDT variant
 
 Scale set (when pipeline is solid):
-- Multiple GBDT variants (raw vs conditional targets; different feature mixes)
-- DNN ensemble (multi-input)
 
 Deliverables per model:
-- `oof_pred.pkl` (or `.npy/.parquet`)
-- `test_pred.pkl`
+
+ Diagnostics (keep it visual, keep it cheap):
+ - The all-in-one notebook plots **OOF probability histograms** and **IA-F1 vs threshold** curves per Level-1 model.
+ - Embeddings are sanity-checked via **train vs test L2-norm histograms** (sampled).
+ - Control sampling cost via `CAFA_DIAG_N` (default: 20000 rows).
+
+ End-of-run analysis (what helps vs hurts):
+ - The all-in-one notebook includes a final **OOF ablation** cell that computes leave-one-out deltas and greedy forward selection for a simple mean-ensemble.
+ - This is **read-only** and is intended to answer: “which model is actually contributing to the score?”
 
 ---
 ## Phase 3 — Level-2 stacker (GCN per ontology)
