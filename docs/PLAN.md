@@ -26,9 +26,15 @@ Notes (pragmatic):
 Checkpointing (resumable across providers):
 - Use a Kaggle Dataset as the canonical artefact store.
 - The notebook pulls checkpoints on startup (`STORE.pull()`) and publishes milestone versions after each stage (`STORE.push(stage, paths)`).
-- Control the target dataset via `CAFA_CHECKPOINT_DATASET_ID` (or `CAFA_KAGGLE_DATASET_ID`) and authenticate via `KAGGLE_USERNAME` + `KAGGLE_KEY` (from `kaggle.json`).
+- Control the target dataset via `CAFA_CHECKPOINT_DATASET_ID` (or `CAFA_KAGGLE_DATASET_ID`) and authenticate via `KAGGLE_USERNAME` + `KAGGLE_KEY`.
 - If `STORE.pull()` fails with **HTTP 403 Forbidden**, the dataset is not accessible (usually private / not shared). On Kaggle, prefer attaching the dataset as a Notebook Input.
 - By default, checkpoint pulls are **fail-fast**. Set `CAFA_CHECKPOINT_REQUIRED=0` if you want best-effort warning-only pulls.
+
+
+
+Practical note (avoid accidental multi-GB uploads):
+- `STORE.push(...)` publishes a *new Kaggle Dataset version* using `--dir-mode zip`, which re-uploads whole folders like `features.zip`.
+- Embedding cells therefore **do not push when artefacts already exist** unless you opt in via `CAFA_CHECKPOINT_PUSH_EXISTING=1`.
 
 Runbook:
 - See `docs/RUNBOOK_CHECKPOINTS.md` for the straight-through “run here, resume there” workflow.
@@ -111,6 +117,10 @@ Outputs:
 
 Goal:
 
+Hard requirements (current pipeline):
+- GBDT via `py_boost` is mandatory: the notebook fails fast if the package is missing.
+- Checkpoint publishing uses `STORE.push(stage, required_paths, note)`; split per-model cells must pass `required_paths=`.
+
 Recommended base set (minimum viable):
 
 Scale set (when pipeline is solid):
@@ -120,6 +130,7 @@ Deliverables per model:
  Diagnostics (keep it visual, keep it cheap):
  - The all-in-one notebook plots **OOF probability histograms** and **IA-F1 vs threshold** curves per Level-1 model.
  - Embeddings are sanity-checked via **train vs test L2-norm histograms** (sampled).
+ - Embedding generation **fails fast** if any non-finite values (NaN/Inf) are detected (prevents silently saving broken Ankh arrays).
  - Control sampling cost via `CAFA_DIAG_N` (default: 20000 rows).
 
  End-of-run analysis (what helps vs hurts):

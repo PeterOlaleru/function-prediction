@@ -7,6 +7,17 @@ import pandas as pd
 import torch
 
 
+def _assert_all_finite_np(arr: np.ndarray, *, name: str) -> None:
+    if not np.isfinite(arr).all():
+        nan = int(np.isnan(arr).sum())
+        inf = int(np.isinf(arr).sum())
+        raise ValueError(f"{name}: non-finite values detected (nan={nan}, inf={inf}). Refusing to save.")
+
+
+def _is_all_finite_torch(t: torch.Tensor) -> bool:
+    return bool(torch.isfinite(t).all().item())
+
+
 def _read_sequences(feather_path: Path) -> tuple[list[str], list[str]]:
     df = pd.read_feather(feather_path)
     if "id" not in df.columns or "sequence" not in df.columns:
@@ -97,7 +108,7 @@ def embed_ankh(
     seqs_sorted = [seqs[i] for i in order]
 
     outs: list[np.ndarray] = []
-    use_amp = device.type == "cuda"
+    amp_enabled = device.type == "cuda"
 
     for i in range(0, len(seqs_sorted), batch_size):
         batch = seqs_sorted[i : i + batch_size]
@@ -116,9 +127,23 @@ def embed_ankh(
         )
         ids = {k: v.to(device) for k, v in ids.items()}
 
-        ctx = torch.amp.autocast("cuda") if use_amp else torch.autocast("cpu", enabled=False)
-        with ctx:
-            out = model(**ids)
+        if "attention_mask" not in ids:
+            raise RuntimeError(f"Tokenizer for {model_name} did not return attention_mask")
+        if (ids["attention_mask"].sum(dim=1) == 0).any():
+            raise RuntimeError(
+                f"Ankh tokenisation produced an all-zero attention_mask (batch_start={i}). Refusing to continue."
+            )
+
+        def _forward(use_amp: bool):
+            ctx = (
+                torch.amp.autocast("cuda")
+                if (use_amp and device.type == "cuda")
+                else torch.autocast("cpu", enabled=False)
+            )
+            with ctx:
+                return model(**ids)
+
+        out = _forward(amp_enabled)
 
         # HuggingFace convention: encoder outputs `last_hidden_state`
         last = getattr(out, "last_hidden_state", None)
@@ -126,12 +151,29 @@ def embed_ankh(
             raise RuntimeError(f"Model {model_name} did not return last_hidden_state")
 
         pooled = _mean_pool(last.float(), ids["attention_mask"])
+
+        # Fail-safe: if AMP corrupts outputs, retry the batch in full precision and disable AMP for the rest.
+        if not _is_all_finite_torch(pooled):
+            if amp_enabled:
+                print(f"WARNING: Non-finite Ankh embeddings under AMP at batch_start={i}; retrying without AMP.")
+                amp_enabled = False
+                out = _forward(False)
+                last = getattr(out, "last_hidden_state", None)
+                if last is None:
+                    raise RuntimeError(f"Model {model_name} did not return last_hidden_state")
+                pooled = _mean_pool(last.float(), ids["attention_mask"])
+
+            if not _is_all_finite_torch(pooled):
+                raise RuntimeError(
+                    f"Ankh produced non-finite embeddings even without AMP (batch_start={i}). Refusing to save." 
+                )
         outs.append(pooled.cpu().numpy())
 
         if device.type == "cuda":
             torch.cuda.empty_cache()
 
     embs_sorted = np.vstack(outs).astype(np.float32)
+    _assert_all_finite_np(embs_sorted, name="ankh_embeds")
     embs = np.zeros_like(embs_sorted)
     embs[order] = embs_sorted
     return embs

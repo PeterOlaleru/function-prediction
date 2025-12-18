@@ -8,6 +8,7 @@ pyarrow>=12.0.0
 scikit-learn>=1.1.0
 torch>=2.0.0
 transformers>=4.30.0
+py-boost
 
 # Optional (text modality generation uses scikit-learn TF-IDF + joblib)
 

@@ -98,15 +98,17 @@ Deliverables:
 - [x] Colab_04: checkpoint publishing skips unchanged stages (CAFA_CHECKPOINT_FORCE_PUSH)
 - [x] Colab_04: fix GOA propagation ID matching (normalise UniProt headers)
 - [x] Colab_04: resolve CAFA_FORCE_REBUILD from Kaggle Secrets
-- [x] Colab_04: T5/ESM2 embedding stages push even when reusing existing artefacts
+- [x] Colab_04: avoid re-uploading checkpoints when embeddings already exist (opt-in via `CAFA_CHECKPOINT_PUSH_EXISTING=1`)
 - [x] Colab_04: ESM2 cell generates ESM2-3B + Ankh (skip-if-exists + checkpoint push)
 - [x] Colab_04: require ESM2-3B + Ankh + taxonomy (fail-fast if missing)
 - [x] Colab_04: split Level-1 training into per-model cells + per-model checkpoint pushes
+- [x] Colab_04: make GBDT mandatory (fail if `py_boost` missing) + fix split `STORE.push(required_paths=...)`
 - [x] Colab_04: remove unused embedding-generator cell; TF-IDF run cell is self-contained
 - [x] Colab_04: PubMed fetch hardened (sanitize invalid XML + retry/backoff + recursive batch split)
 - [x] Colab_04: ProtT5 checkpoint pushes after train and after test (granular, crash-safe)
-- [x] Colab_04: ESM2/ESM2-3B/Ankh checkpoint pushes after train and after test (granular, crash-safe)
+- [x] Colab_04: ESM2/ESM2-3B/Ankh checkpoint pushes after train and after test (granular, crash-safe; Ankh keyed by model via `CAFA_ANKH_MODEL`)
 - [x] Phase 2: add KNN as Level-1 model (OOF + test preds) and wire into GCN stacker
 - [x] Colab_04: visual diagnostics for embeddings + Level-1 models (histograms + IA-F1 curves)
+- [x] Ankh embeddings: AMP fallback + non-finite guard (prevents silently saving all-NaN `.npy` artefacts)
 - [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
 - [ ] Phase 4: strict min/max propagation + final submission generation

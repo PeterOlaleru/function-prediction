@@ -27,12 +27,12 @@ Where do you find `CAFA_CHECKPOINT_DATASET_ID`?
    - On first publish, the notebook will attempt to create/version that dataset via the Kaggle API.
 
 2) Provide auth (API-only):
-- Kaggle CLI publishing/downloading requires Kaggle API credentials (from `kaggle.json`):
+- Kaggle CLI publishing/downloading requires Kaggle API credentials:
    - Set `KAGGLE_USERNAME=<your-username>` and `KAGGLE_KEY=<your-key>` via **Kaggle Secrets** or **Colab secrets**
    - The notebook will try, in order: env var → Kaggle Secrets → Colab `userdata`.
 
 Back-compat:
-- `KAGGLE_API_TOKEN` is only supported if it contains the full `kaggle.json` JSON payload or `username:key`.
+- `KAGGLE_API_TOKEN` is only supported if it contains `username:key`.
 
 Note: `CAFA_CHECKPOINT_DATASET_ID` is resolved the same way (env var → Kaggle Secrets → Colab `userdata`).
 
