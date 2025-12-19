@@ -40,6 +40,14 @@ Act as intellectual sparring partner:
 
 **Never** leave checkboxes stale after finishing work.
 
+## Secrets Handling
+- **Colab-only rule:** in Colab, fetch secrets **only** via the Colab userdata API:
+	```py
+	from google.colab import userdata
+	userdata.get('SECRET_NAME')
+	```
+- Do **not** rely on other secret sources for Colab runs (env vars, `~/.kaggle/kaggle.json`, or other secret clients) — Colab secrets must be obtained using `userdata.get(...)` and nothing else.
+
 ## Files
 train_sequences.fasta – amino acid sequences for proteins in the training set
 train_terms.tsv – the training set of proteins and corresponding annotated GO terms

@@ -35,6 +35,7 @@ Deliverables:
 Deliverables:
 - Out-of-fold (OOF) predictions for each base model (GBDTs + logistic regression + DNN ensemble).
 - Test predictions for each base model.
+- **Target Scope**: 1,500 GO terms (Top-K). Scalable to 13k+ via RAPIDS.
 
 ### Phase 3 — Level-2 stacker (GCN per ontology)
 Deliverables:
@@ -87,6 +88,7 @@ Deliverables:
 - [x] Colab_04: unified secrets getter (env → Kaggle Secrets → Colab `userdata`) for Kaggle creds + dataset ID
 - [x] Runbook: resumable runs across Kaggle/Colab/local (`docs/RUNBOOK_CHECKPOINTS.md`)
 - [x] Colab_04: clearer failure mode for checkpoint pull HTTP 403 (private/not-shared dataset guidance)
+- [x] Colab_04: checkpoint pull exports Kaggle creds + surfaces Kaggle CLI stderr on failure (incl. 404 guidance)
 - [x] Colab_04: compact notebook formatting (remove accidental excessive blank lines)
 - [x] Colab_04: removed markdown cells + clarified embeddings generator label
 - [x] Colab_04: added CAFA_FORCE_REBUILD + improved Colab dataset discovery (CAFA_DATASET_ROOT)
@@ -110,5 +112,9 @@ Deliverables:
 - [x] Phase 2: add KNN as Level-1 model (OOF + test preds) and wire into GCN stacker
 - [x] Colab_04: visual diagnostics for embeddings + Level-1 models (histograms + IA-F1 curves)
 - [x] Ankh embeddings: AMP fallback + non-finite guard (prevents silently saving all-NaN `.npy` artefacts)
+- [x] Option A: first-submission notebook that skips Ankh (`notebooks/Colab_04b_first_submission_no_ankh.ipynb`)
+- [x] Option A: first-submission notebook trimmed (reuse artefacts) + optional checkpoint republish without Ankh/ankr `.npy` (Colab_04b)
+- [x] Colab: secrets fetched only via `from google.colab import userdata; userdata.get('...')`
+- [x] Colab_04_all_in_one: enforce userdata-only secrets + rerun Kaggle CLI on empty error output
 - [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
 - [ ] Phase 4: strict min/max propagation + final submission generation

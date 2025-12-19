@@ -30,7 +30,11 @@ Parse FASTA files containing training and test sequences and save in `.feather` 
 
 ### Convert Targets and Calculate Priors
 1. Convert ground truth targets into Parquet format (`real_targets`)
-2. Calculate helper data:
+2. **Target Selection (Champion Strategy)**:
+   - Select **13,500 terms** total to maximize diversity and coverage.
+   - **Breakdown**: 10,000 Biological Process (BP) + 2,000 Molecular Function (MF) + 1,500 Cellular Component (CC).
+   - This specific ratio ensures >90% coverage of annotations in each aspect while capturing rare, high-IA terms.
+3. Calculate helper data:
    - Prior means for each Gene Ontology (GO) term (excluding NaN cells)
    - NaN rate for each term
 

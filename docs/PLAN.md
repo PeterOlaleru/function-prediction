@@ -27,7 +27,10 @@ Checkpointing (resumable across providers):
 - Use a Kaggle Dataset as the canonical artefact store.
 - The notebook pulls checkpoints on startup (`STORE.pull()`) and publishes milestone versions after each stage (`STORE.push(stage, paths)`).
 - Control the target dataset via `CAFA_CHECKPOINT_DATASET_ID` (or `CAFA_KAGGLE_DATASET_ID`) and authenticate via `KAGGLE_USERNAME` + `KAGGLE_KEY`.
+- Colab-only rule: fetch secrets exclusively via `from google.colab import userdata; userdata.get('...')`.
 - If `STORE.pull()` fails with **HTTP 403 Forbidden**, the dataset is not accessible (usually private / not shared). On Kaggle, prefer attaching the dataset as a Notebook Input.
+- If `STORE.pull()` fails with **HTTP 404 Not Found**, either the dataset ID is wrong or it is private/not accessible to the current account.
+- On any `STORE.pull()` failure, the raised exception includes a Kaggle CLI output excerpt (so you can see the actual reason in Colab logs).
 - By default, checkpoint pulls are **fail-fast**. Set `CAFA_CHECKPOINT_REQUIRED=0` if you want best-effort warning-only pulls.
 
 
@@ -88,9 +91,15 @@ Minimum recommended modalities:
 - T5 embeddings
 - ESM2 embeddings (650M)
 - ESM2-3B embeddings
-- Ankh embeddings
 - TF-IDF text embeddings (EntryID→text corpus)
 - Taxonomy features from `Train/train_taxonomy.tsv` + `Test/testsuperset-taxon-list.tsv`
+
+Option A (first submission, faster / safer):
+- Skip Ankh entirely (see `notebooks/Colab_04b_first_submission_no_ankh.ipynb`) until Ankh artefacts are regenerated and pass non-finite checks.
+- The no-Ankh notebook is trimmed for reuse-artefacts runs: checkpoint pushes are disabled by default; optional cleanup republish is gated by `CAFA_CLEAN_CHECKPOINT_REMOVE_ANKH=1`.
+
+Add later (once stable):
+- Ankh embeddings
 
 Optional:
 - None for the core pipeline (add only if clearly justified).
@@ -116,6 +125,11 @@ Outputs:
 ## Phase 2 — Level-1 models (OOF predictions)
 
 Goal:
+- Train diverse base models on the embeddings to predict GO term probabilities.
+- **Target Scope**: 13,500 GO terms (Champion Strategy).
+  - **Breakdown**: 10,000 BP + 2,000 MF + 1,500 CC.
+  - **Validation**: Analysis of CAFA 6 data confirms this split covers >90% of annotations per aspect (BP: 95%, MF: 90%, CC: 98%).
+  - **Implementation**: Requires RAPIDS (GPU) to handle the ~1.7B parameters.
 
 Hard requirements (current pipeline):
 - GBDT via `py_boost` is mandatory: the notebook fails fast if the package is missing.
