@@ -17,6 +17,11 @@ Act as intellectual sparring partner:
 - Suggest alternative perspectives
 - Prioritise truth over agreement — correct me clearly if wrong
 
+## Quality Bar (Non-negotiable)
+- Do **not** suggest "compromises" that reduce research quality (e.g., lowering `TOP_K`, reducing folds, dropping modalities, loosening ontology constraints) unless I explicitly ask for a *fast dev run*.
+- Default to preserving: full term set, full GO constraints, and the intended evaluation protocol.
+- If runtime is the issue, prioritise: profiling, algorithmic efficiency, better batching/chunking, parallelism/thread control, GPU acceleration, and I/O improvements **without** changing the research target.
+
 ## Response Structure
 1. **Step-by-step lists** preferred
 2. **Avoid theory** unless explicitly requested
@@ -32,11 +37,19 @@ Act as intellectual sparring partner:
 - **Explain patterns visually** before diving into numbers
 - Format: inline plots with `%matplotlib inline`, readable font sizes (12+)
 
+## Hardware Specs
+- **Local (Windows)**: 16GB RAM, NVIDIA RTX 2070 (8GB VRAM)
+- **Colab Pro+**: 53GB RAM, 22.5GB GPU VRAM (A100/L4)
+
 ## Project Management
 **Critical:** After completing any task, immediately update progress tracking:
 - Tick checkbox in `docs/overview.md` section 4a (Progress Checklist)
 - Mark corresponding priority in `docs/PLAN.md` if applicable
 - Single source of truth: `docs/overview.md` for comprehensive tracking
+
+**Testing Protocol:**
+- **Local First:** Always create a local test script (e.g., in `scripts/`) to verify logic, file paths, and memory usage on a small sample *before* suggesting a Colab run.
+- **Resource Estimation:** Use local tests to estimate RAM/Time requirements for the full run.
 
 **Never** leave checkboxes stale after finishing work.
 

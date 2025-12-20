@@ -93,11 +93,13 @@ Deliverables:
 - [x] Colab_04: removed markdown cells + clarified embeddings generator label
 - [x] Colab_04: added CAFA_FORCE_REBUILD + improved Colab dataset discovery (CAFA_DATASET_ROOT)
 - [x] Colab_04: Colab-only Kaggle API auto-download for competition files (CAFA_COLAB_AUTO_DOWNLOAD)
+- [x] Colab_04b: strict file-by-file hydration for Data Explorer artefacts (v28)
 - [x] Colab_04: Colab competition download unzips via Python (no `kaggle --unzip`)
 - [x] Colab_04: fix Cell 3 diagnostics plot syntax (smoke-check clean)
 - [x] Colab_04: fail-fast FASTA readability checks after setup
 - [x] Colab_04: checkpoint publishing uploads folders (--dir-mode zip)
 - [x] Colab_04: checkpoint publishing skips unchanged stages (CAFA_CHECKPOINT_FORCE_PUSH)
+- [x] Colab_04b: Fix missing features download (file-by-file strategy for unzipped dataset)
 - [x] Colab_04: fix GOA propagation ID matching (normalise UniProt headers)
 - [x] Colab_04: resolve CAFA_FORCE_REBUILD from Kaggle Secrets
 - [x] Colab_04: avoid re-uploading checkpoints when embeddings already exist (opt-in via `CAFA_CHECKPOINT_PUSH_EXISTING=1`)
@@ -110,6 +112,10 @@ Deliverables:
 - [x] Colab_04: ProtT5 checkpoint pushes after train and after test (granular, crash-safe)
 - [x] Colab_04: ESM2/ESM2-3B/Ankh checkpoint pushes after train and after test (granular, crash-safe; Ankh keyed by model via `CAFA_ANKH_MODEL`)
 - [x] Phase 2: add KNN as Level-1 model (OOF + test preds) and wire into GCN stacker
+- [x] Colab_04b: Phase 2a LogReg uses disk-backed folds + streamed scaling (avoids Colab RAM OOM)
+- [x] Local: Phase 2a streaming LR mini-run (disk-backed X/Y + tiny fold completes)
+- [x] Colab_04b: normalise `train_terms.aspect` (namespace strings → BP/MF/CC) + fail-fast guardrail (prevents silent target fallback)
+- [x] Colab_04b: enable RAPIDS/cuML LogReg path by default (`USE_RAPIDS_LOGREG=True`)
 - [x] Colab_04: visual diagnostics for embeddings + Level-1 models (histograms + IA-F1 curves)
 - [x] Ankh embeddings: AMP fallback + non-finite guard (prevents silently saving all-NaN `.npy` artefacts)
 - [x] Option A: first-submission notebook that skips Ankh (`notebooks/Colab_04b_first_submission_no_ankh.ipynb`)

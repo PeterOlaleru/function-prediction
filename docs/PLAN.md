@@ -134,6 +134,9 @@ Goal:
 Hard requirements (current pipeline):
 - GBDT via `py_boost` is mandatory: the notebook fails fast if the package is missing.
 - Checkpoint publishing uses `STORE.push(stage, required_paths, note)`; split per-model cells must pass `required_paths=`.
+- Colab_04b Phase 2a LogReg avoids `X[idx_tr]`/`fit_transform` full copies by using disk-backed folds + streamed scaling.
+- Colab_04b Phase 2a LogReg defaults to RAPIDS/cuML when available (`USE_RAPIDS_LOGREG=True`).
+- Colab_04b target selection normalises `train_terms.aspect` (namespace strings → BP/MF/CC) and fails fast if the split is missing (prevents silent global fallback).
 
 Recommended base set (minimum viable):
 

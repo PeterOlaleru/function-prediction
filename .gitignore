@@ -55,3 +55,6 @@ best_model/
 # Artefacts
 artefacts/
 artefacts_local/
+
+# Secrets
+.env
