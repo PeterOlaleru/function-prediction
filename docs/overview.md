@@ -108,6 +108,12 @@ Deliverables:
 - [x] Colab_04: split Level-1 training into per-model cells + per-model checkpoint pushes
 - [x] Colab_04: make GBDT mandatory (fail if `py_boost` missing) + fix split `STORE.push(required_paths=...)`
 - [x] Colab_04: remove unused embedding-generator cell; TF-IDF run cell is self-contained
+- [x] 05: no-repo notebook bootstrap + mandatory `cafa6_data/` root + mandatory file-by-file downloads + coherent `STORE.pull/push`
+- [x] 05: checkpoint publishing is strict: stage-only uploads; never publish downloaded/pulled files; only publish freshly-built outputs
+- [x] 05: checkpoint pull/push are env-controlled with safe local defaults (avoid accidental Kaggle pulls/pushes)
+- [x] 05: staged checkpoint requirements (CAFA_CHECKPOINT_PULL_STAGE) + GCN stacker emits `test_pred_gcn.npy`
+- [x] 05: final audit — `cafa6_data/` is canonical; checkpoint store de-duped + manifest fixed; notebook passes syntax + name smoke-checks
+- [x] `notebooks/05_cafa_e2e.ipynb`: LogReg upgraded to RAM-safe + RAPIDS-when-feasible implementation (tqdm ETA + disk-backed folds)
 - [x] Colab_04: PubMed fetch hardened (sanitize invalid XML + retry/backoff + recursive batch split)
 - [x] Colab_04: ProtT5 checkpoint pushes after train and after test (granular, crash-safe)
 - [x] Colab_04: ESM2/ESM2-3B/Ankh checkpoint pushes after train and after test (granular, crash-safe; Ankh keyed by model via `CAFA_ANKH_MODEL`)
@@ -122,5 +128,5 @@ Deliverables:
 - [x] Option A: first-submission notebook trimmed (reuse artefacts) + optional checkpoint republish without Ankh/ankr `.npy` (Colab_04b)
 - [x] Colab: secrets fetched only via `from google.colab import userdata; userdata.get('...')`
 - [x] Colab_04_all_in_one: enforce userdata-only secrets + rerun Kaggle CLI on empty error output
-- [ ] Phase 3: train GCN stacker (BP/MF/CC) + TTA aggregation
-- [ ] Phase 4: strict min/max propagation + final submission generation
+- [x] Phase 3: train GCN stacker (BP/MF/CC) + emit `test_pred_gcn.npy`
+- [x] Phase 4: strict min/max propagation + final submission generation

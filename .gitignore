@@ -55,6 +55,7 @@ best_model/
 # Artefacts
 artefacts/
 artefacts_local/
+cafa6_data/
 
 # Secrets
 .env

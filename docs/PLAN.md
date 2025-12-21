@@ -16,6 +16,9 @@ Deliverables:
   - Paths + artefact locations
   - Sanity checks + diagnostics plots
 
+Status:
+- ✅ `notebooks/05_cafa_e2e.ipynb`: removed obsolete `CAFA_INPUT_ROOT`/`INPUT_ROOT` wiring; notebook passes syntax smoke-check.
+
 Run:
 - `notebooks/00_setup_kaggle_colab.ipynb`
 
@@ -25,7 +28,7 @@ Notes (pragmatic):
 
 Checkpointing (resumable across providers):
 - Use a Kaggle Dataset as the canonical artefact store.
-- The notebook pulls checkpoints on startup (`STORE.pull()`) and publishes milestone versions after each stage (`STORE.push(stage, paths)`).
+- The notebook pulls checkpoints on startup (`STORE.pull(required_files=...)`) and publishes milestone versions after each stage.
 - Control the target dataset via `CAFA_CHECKPOINT_DATASET_ID` (or `CAFA_KAGGLE_DATASET_ID`) and authenticate via `KAGGLE_USERNAME` + `KAGGLE_KEY`.
 - Colab-only rule: fetch secrets exclusively via `from google.colab import userdata; userdata.get('...')`.
 - If `STORE.pull()` fails with **HTTP 403 Forbidden**, the dataset is not accessible (usually private / not shared). On Kaggle, prefer attaching the dataset as a Notebook Input.
@@ -35,9 +38,23 @@ Checkpointing (resumable across providers):
 
 
 
-Practical note (avoid accidental multi-GB uploads):
-- `STORE.push(...)` publishes a *new Kaggle Dataset version* using `--dir-mode zip`, which re-uploads whole folders like `features.zip`.
-- Embedding cells therefore **do not push when artefacts already exist** unless you opt in via `CAFA_CHECKPOINT_PUSH_EXISTING=1`.
+Practical note (non-negotiable publishing rule):
+- The notebook must **never publish downloaded/pulled files** (competition inputs, checkpoint pulls, mounted inputs).
+- It must **only publish freshly-built artefacts from the current runtime**.
+- Implementation detail: publishing happens from an isolated staging directory containing only the newly built outputs (so the Kaggle CLI never zips the whole working tree).
+- This behaviour is enforced in-code even if you enable checkpointing via env vars (publishing is still blocked for downloaded/pulled or non-fresh artefacts).
+
+Operational note (important):
+- `CAFA_CHECKPOINT_PULL` / `CAFA_CHECKPOINT_PUSH` are env-controlled; safe defaults are used on local runs (pull off, push off).
+- `CAFA_CHECKPOINT_PULL_STAGE` selects which milestone to hydrate (cumulative). Useful stages in `notebooks/05_cafa_e2e.ipynb`:
+  - `stage_01_parsed` (parsed tables)
+  - `stage_03_tfidf_text` (TF-IDF vectoriser + `.npy`)
+  - `stage_04_external_goa_priors` (propagated IEA priors)
+  - `stage_06_embeddings_core` (T5/ESM2/ESM2-3B/Ankh)
+  - `stage_07_level1_preds` (Level-1 OOF + test preds)
+  - `stage_08_stacker_gcn` (writes `features/test_pred_gcn.npy` needed for submission)
+- Kaggle API “single file” downloads are reliable for top-level files, but can 404 for nested paths on some datasets.
+  For deterministic file-by-file hydration across environments, either publish a *flat* checkpoint dataset (e.g. `features__x.npy` naming) or attach the dataset as a Kaggle Notebook Input (mounted filesystem copy).
 
 Runbook:
 - See `docs/RUNBOOK_CHECKPOINTS.md` for the straight-through “run here, resume there” workflow.
