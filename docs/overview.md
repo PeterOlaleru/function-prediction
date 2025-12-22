@@ -113,6 +113,8 @@ Deliverables:
 - [x] 05: checkpoint pull/push are env-controlled with safe local defaults (avoid accidental Kaggle pulls/pushes)
 - [x] 05: staged checkpoint requirements (CAFA_CHECKPOINT_PULL_STAGE) + GCN stacker emits `test_pred_gcn.npy`
 - [x] 05: final audit — `cafa6_data/` is canonical; checkpoint store de-duped + manifest fixed; notebook passes syntax + name smoke-checks
+- [x] 05: Phase 2 setup aligned with 04b (aspect Top-K split + guardrail) + Ankh mandatory + disk-backed `X_train_mmap.npy`/`X_test_mmap.npy`
+- [x] 05: local run verified up to (excluding) embeddings generation (pre-Ankh)
 - [x] `notebooks/05_cafa_e2e.ipynb`: LogReg upgraded to RAM-safe + RAPIDS-when-feasible implementation (tqdm ETA + disk-backed folds)
 - [x] Colab_04: PubMed fetch hardened (sanitize invalid XML + retry/backoff + recursive batch split)
 - [x] Colab_04: ProtT5 checkpoint pushes after train and after test (granular, crash-safe)

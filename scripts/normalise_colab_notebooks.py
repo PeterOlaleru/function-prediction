@@ -113,6 +113,7 @@ def main() -> None:
     targets = [
         nb_dir / "Colab_01_build_entryid_text_uniprot_pubmed.ipynb",
         nb_dir / "Colab_02_generate_optional_embeddings.ipynb",
+        nb_dir / "05_cafa_e2e.ipynb",
     ]
 
     for p in targets:

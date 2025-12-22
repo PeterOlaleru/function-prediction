@@ -115,8 +115,8 @@ Option A (first submission, faster / safer):
 - Skip Ankh entirely (see `notebooks/Colab_04b_first_submission_no_ankh.ipynb`) until Ankh artefacts are regenerated and pass non-finite checks.
 - The no-Ankh notebook is trimmed for reuse-artefacts runs: checkpoint pushes are disabled by default; optional cleanup republish is gated by `CAFA_CLEAN_CHECKPOINT_REMOVE_ANKH=1`.
 
-Add later (once stable):
-- Ankh embeddings
+Main pipeline (05 / Colab_04):
+- Ankh embeddings are mandatory (fail-fast if missing).
 
 Optional:
 - None for the core pipeline (add only if clearly justified).
@@ -152,6 +152,7 @@ Hard requirements (current pipeline):
 - GBDT via `py_boost` is mandatory: the notebook fails fast if the package is missing.
 - Checkpoint publishing uses `STORE.push(stage, required_paths, note)`; split per-model cells must pass `required_paths=`.
 - Colab_04b Phase 2a LogReg avoids `X[idx_tr]`/`fit_transform` full copies by using disk-backed folds + streamed scaling.
+- `notebooks/05_cafa_e2e.ipynb` Phase 2 setup mirrors the 04b target-selection logic and builds disk-backed `features/X_train_mmap.npy` + `features/X_test_mmap.npy` so downstream per-model cells can stay RAM-safe.
 - Colab_04b Phase 2a LogReg defaults to RAPIDS/cuML when available (`USE_RAPIDS_LOGREG=True`).
 - Colab_04b target selection normalises `train_terms.aspect` (namespace strings → BP/MF/CC) and fails fast if the split is missing (prevents silent global fallback).
 
