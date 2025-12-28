@@ -109,6 +109,7 @@ Deliverables:
 - [x] Colab_04: require ESM2-3B + Ankh + taxonomy (fail-fast if missing)
 - [x] Colab_04: split Level-1 training into per-model cells + per-model checkpoint pushes
 - [x] Colab_04: make GBDT mandatory (fail if `py_boost` missing) + fix split `STORE.push(required_paths=...)`
+- [x] GPU VM: documented Python 3.11 + CuPy + py_boost setup for kernel-init failures (`docs/ENV_GPU_PYBOOST_PY311.md`)
 - [x] Colab_04: remove unused embedding-generator cell; TF-IDF run cell is self-contained
 - [x] 05: no-repo notebook bootstrap + mandatory `cafa6_data/` root + mandatory file-by-file downloads + coherent `STORE.pull/push`
 - [x] 05: checkpoint publishing is strict: stage-only uploads; never publish downloaded/pulled files; only publish freshly-built outputs
@@ -117,7 +118,17 @@ Deliverables:
 - [x] 05: final audit — `cafa6_data/` is canonical; checkpoint store de-duped + manifest fixed; notebook passes syntax + name smoke-checks
 - [x] 05: Phase 2 setup aligned with 04b (aspect Top-K split + guardrail) + Ankh mandatory + disk-backed `X_train_mmap.npy`/`X_test_mmap.npy`
 - [x] 05: local run verified up to (excluding) embeddings generation (pre-Ankh)
+- [x] 05: GBDT uses contiguous RAM arrays for mini-fit + fold slices (prevents numba TypingError)
+- [x] 05: GBDT uses fold validation via `eval_sets` (enables `es=` early stopping) + fixes resume print path
+- [x] 05: GBDT refactor to multi-output per fold (predict `X_test` once per fold, not 1,585×)
+- [x] 05: LogReg materialises `X_test` + fold `X_val` into RAM (reduces memmap I/O bottlenecks)
 - [x] `notebooks/05_cafa_e2e.ipynb`: LogReg upgraded to RAM-safe + RAPIDS-when-feasible implementation (tqdm ETA + disk-backed folds)
+- [x] `notebooks/05_cafa_e2e.ipynb`: Phase 2 LogReg split by aspect (BP/MF/CC) + per-aspect OOF/test artefacts + combined 13,500-term output
+- [x] `notebooks/05_cafa_e2e.ipynb`: Phase 2 LogReg RAM cliff fix (no `Y_aspect` fancy-index copy; mandatory per-aspect runs; batched val/test)
+- [x] `notebooks/05_cafa_e2e.ipynb`: Phase 2 LogReg deep GPU telemetry (CuPy `memGetInfo` + pool stats around `X_tr_gpu` and first cuML fit)
+- [x] `scripts/audit_gbdt_target_scale.py`: Audit expanding GBDT targets 4,500→6,000 (frequency drop-off, <50 noise floor rate, IA contribution)
+- [x] `scripts/audit_optimal_topk_by_aspect.py`: Per-aspect (BP/MF/CC) optimal Top-K audit under IA vs noise-floor trade-off
+- [x] `scripts/verify_signal_horizon_1585.py`: Foolproof verification of the 1,585 stable targets from Phase-1 artefacts (namespace integrity, ≥50 positives, IA coverage)
 - [x] Colab_04: PubMed fetch hardened (sanitize invalid XML + retry/backoff + recursive batch split)
 - [x] Colab_04: ProtT5 checkpoint pushes after train and after test (granular, crash-safe)
 - [x] Colab_04: ESM2/ESM2-3B/Ankh checkpoint pushes after train and after test (granular, crash-safe; Ankh keyed by model via `CAFA_ANKH_MODEL`)
@@ -137,3 +148,5 @@ Deliverables:
 - [x] HF: migrate checkpoint publishing to Hugging Face Hub (HF-only; no Kaggle publish) + bulk uploader (`scripts/hf_upload_cafa6_data.py`)
 - [x] HF: verify uploaded artefacts and LFS status (`scripts/hf_verify_cafa6_data_upload.py`)
 - [x] `notebooks/05_cafa_e2e.ipynb`: remove Kaggle dataset emergency restore (no in-notebook full-tree republish)
+- [x] `notebooks/05_cafa_e2e.ipynb`: DNN refactored to per-modality multi-branch heads + 5 seeds × 5 folds (25 models)
+- [x] `notebooks/05_cafa_e2e.ipynb`: GCN stacker uses concatenated Level-1 OOF features (not mean) + Phase 4 max/min propagation iterates >=10
