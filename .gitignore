@@ -57,6 +57,8 @@ artefacts/
 artefacts_local/
 cafa6_data/
 cache/
+log/
+logs/
 
 # Secrets
 .env
