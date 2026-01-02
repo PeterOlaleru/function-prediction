@@ -4,7 +4,7 @@
 `knn_standalone.ipynb` is a streamlined notebook extracted from `05_cafa_e2e.ipynb` that runs **only** the KNN model training without the overhead of HuggingFace file downloading/uploading.
 
 ## What's Included
-This notebook contains the minimal required cells to train the KNN model:
+This notebook contains the minimal required cells to train the KNN model and generate a Kaggle submission:
 
 1. **Cell 0 (Markdown)**: Title and introduction
 2. **Cell 1 (Code)**: Basic environment setup (NO REPO)
@@ -27,8 +27,18 @@ This notebook contains the minimal required cells to train the KNN model:
    - 5-fold cross-validation
    - IA-weighted neighbor voting
    - Per-protein max normalization
-   - F1 evaluation
+   - **Dynamic F1 evaluation** (calculated, not hardcoded)
    - Saves OOF and test predictions
+7. **Cell 6 (Code)**: Generate submission.tsv (NEW)
+   - Loads KNN test predictions
+   - Applies hierarchy propagation (Max/Min)
+   - Applies per-aspect thresholds
+   - Formats submission per CAFA rules
+   - Saves to `submission.tsv`
+8. **Cell 7 (Code)**: Submit to Kaggle (NEW)
+   - Submits `submission.tsv` to the competition
+   - Uses Kaggle CLI
+   - Customizable submission message
 
 ## What's NOT Included
 This notebook intentionally excludes:
@@ -80,7 +90,18 @@ cafa6_data/
    - Cell 2: Configuration
    - Cell 3: Data loading
    - Cell 4: KNN helper functions
-   - Cell 5: KNN training
+   - Cell 5: KNN training (generates predictions + **dynamic F1 evaluation**)
+   - Cell 6: Generate submission.tsv (optional)
+   - Cell 7: Submit to Kaggle (optional - requires Kaggle CLI)
+
+### Output
+The notebook produces:
+- `features/level1_preds/oof_pred_knn.npy`: Out-of-fold predictions
+- `features/level1_preds/test_pred_knn.npy`: Test set predictions
+- `features/oof_pred_knn.npy`: Backward-compatible copy
+- `features/test_pred_knn.npy`: Backward-compatible copy
+- `submission.tsv`: Competition submission file (if Cell 6 is run)
+- **F1 scores**: Dynamically calculated and printed during training
 
 ## Important Notes
 
@@ -106,7 +127,27 @@ The notebook produces:
 ## Performance
 - **Runtime**: ~30-60 minutes on A100 GPU (with cuML)
 - **Memory**: ~20-30GB RAM, ~10GB VRAM
-- **Expected F1**: ~0.25-0.26 (IA-weighted)
+- **Expected F1**: ~0.25-0.26 (IA-weighted, dynamically calculated)
+
+## F1 Evaluation
+The notebook includes **dynamic F1 evaluation** in Cell 5:
+- Calculates IA-weighted F1 at multiple thresholds (0.1, 0.2, 0.3, 0.4, 0.5)
+- Reports precision and recall for each threshold
+- Identifies the best threshold automatically
+- F1 scores are **calculated on the fly**, not hardcoded
+
+Example output:
+```
+  Threshold   F1      Precision  Recall
+  ------------------------------------------
+  0.10       0.2234  0.1523      0.4156
+  0.20       0.2512  0.2145      0.3234
+  0.30       0.2579  0.2567      0.2591
+  0.40       0.2401  0.2987      0.2012
+  0.50       0.2145  0.3245      0.1678
+  ------------------------------------------
+  Best: F1=0.2579 @ threshold=0.30
+```
 
 ## Differences from Full Pipeline
 The CheckpointStore in this notebook is a stub that:
@@ -117,6 +158,33 @@ The CheckpointStore in this notebook is a stub that:
 This means you must manually ensure all required files are present before running.
 
 ## Troubleshooting
+
+### Kaggle Submission (Cell 7)
+If you encounter issues submitting to Kaggle:
+
+**Kaggle CLI not found:**
+```bash
+pip install kaggle
+```
+
+**API credentials not configured:**
+1. Go to https://www.kaggle.com/settings
+2. Click "Create New API Token"
+3. Save `kaggle.json` to:
+   - Linux/Mac: `~/.kaggle/kaggle.json`
+   - Windows: `C:\Users\<YourUsername>\.kaggle\kaggle.json`
+4. Set permissions: `chmod 600 ~/.kaggle/kaggle.json` (Linux/Mac)
+
+**Submission failed:**
+- Check that `submission.tsv` exists in `WORK_ROOT`
+- Verify you have accepted the competition rules
+- Check file format: tab-separated, no header, 3 columns (EntryID, term, score)
+
+**Customize submission message:**
+Edit the `SUBMISSION_MESSAGE` variable in Cell 7:
+```python
+SUBMISSION_MESSAGE = 'Your custom message here'
+```
 
 ### Missing Files
 If you get "Missing required modality 'esm2_3b'" error:
