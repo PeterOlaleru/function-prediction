@@ -47,6 +47,7 @@ Before running this notebook, you must have:
 - Pre-computed embeddings: `features/test_embeds_esm2_3b.npy`
 - Parsed training data: `parsed/train_terms.parquet`
 - Parsed training sequences: `parsed/train_seq.feather`
+- Parsed test sequences: `parsed/test_seq.feather`
 - Top terms list: `features/top_terms_13500.json`
 - IA weights: `IA.tsv`
 
@@ -60,7 +61,8 @@ cafa6_data/
 │   └── level1_preds/         # Output directory
 ├── parsed/
 │   ├── train_terms.parquet
-│   └── train_seq.feather
+│   ├── train_seq.feather
+│   └── test_seq.feather
 └── IA.tsv
 ```
 
