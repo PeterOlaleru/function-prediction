@@ -16,13 +16,18 @@ This notebook contains the minimal required cells to train the KNN model:
 4. **Cell 3 (Code)**: Data loading (Phase 2 setup)
    - Loads training/test features
    - Loads target labels (Y)
-   - Loads IA weights
    - Defines helper functions
-5. **Cell 4 (Code)**: KNN training
+5. **Cell 4 (Code)**: KNN helper functions
+   - L2 normalization function
+   - IA weights loading
+   - Y_knn preparation
+   - X_knn_test preparation
+6. **Cell 5 (Code)**: KNN training (FIXED - fully functional)
    - cuML/sklearn KNN with cosine similarity
    - 5-fold cross-validation
    - IA-weighted neighbor voting
    - Per-protein max normalization
+   - F1 evaluation
    - Saves OOF and test predictions
 
 ## What's NOT Included
@@ -72,7 +77,22 @@ cafa6_data/
    - Cell 1: Environment setup
    - Cell 2: Configuration
    - Cell 3: Data loading
-   - Cell 4: KNN training
+   - Cell 4: KNN helper functions
+   - Cell 5: KNN training
+
+## Important Notes
+
+### Fixed Issues
+This standalone notebook includes fixes for issues in the original e2e notebook:
+- ✓ Added missing `_l2_norm` function
+- ✓ Added missing `Y_knn` variable setup
+- ✓ Added missing `X_knn_test` variable setup
+- ✓ Added missing `weights_full` loading
+- ✓ Fixed incomplete sklearn KNN initialization in fold loop
+- ✓ Fixed missing KNN fitting and prediction code in CV folds
+- ✓ Added proper similarity conversion for both cuML and sklearn backends
+
+The KNN implementation in this notebook is **fully functional** and will run successfully.
 
 ### Output
 The notebook produces:
