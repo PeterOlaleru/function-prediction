@@ -26,8 +26,8 @@ This notebook contains the minimal required cells to train the KNN model and gen
    - cuML/sklearn KNN with cosine similarity
    - 5-fold cross-validation
    - IA-weighted neighbor voting
-   - Per-protein max normalization
    - **Dynamic F1 evaluation** (calculated, not hardcoded)
+   - **FORCE_RETRAIN defaults to True** (always retrains)
    - Saves OOF and test predictions
 7. **Cell 6 (Code)**: Generate submission.tsv (NEW)
    - Loads KNN test predictions
@@ -35,7 +35,10 @@ This notebook contains the minimal required cells to train the KNN model and gen
    - Applies per-aspect thresholds
    - Formats submission per CAFA rules
    - Saves to `submission.tsv`
-8. **Cell 7 (Code)**: Submit to Kaggle (NEW)
+8. **Cell 7 (Code)**: Install Kaggle CLI (NEW)
+   - Installs kaggle package via pip
+9. **Cell 8 (Code)**: Submit to Kaggle (NEW)
+   - Loads credentials from `.env` (parent directory)
    - Submits `submission.tsv` to the competition
    - Uses Kaggle CLI
    - Customizable submission message
@@ -80,11 +83,11 @@ cafa6_data/
 
 ### Environment Variables
 - `CAFA_TRAIN_LEVEL1`: Set to `1` to train (default), `0` to skip
-- `FORCE_RETRAIN`: Set to `1` to force retraining even if predictions exist
+- `FORCE_RETRAIN`: Set to `0` to skip retraining if predictions exist (default is `1` - always retrain)
 - `KNN_K`: Number of neighbors (default: 10)
 - `KNN_BATCH`: Batch size for predictions (default: 256)
-- `KAGGLE_USERNAME`: Your Kaggle username (for submission)
-- `KAGGLE_KEY`: Your Kaggle API key (for submission)
+- `KAGGLE_USERNAME`: Your Kaggle username (for submission - loaded from parent dir `.env`)
+- `KAGGLE_KEY`: Your Kaggle API key (for submission - loaded from parent dir `.env`)
 
 ### Running the Notebook
 1. Ensure all prerequisites are in place
@@ -94,9 +97,11 @@ cafa6_data/
    - Cell 3: Data loading
    - Cell 4: KNN helper functions
    - Cell 5: KNN training (generates predictions + **dynamic F1 evaluation**)
-     - **Note:** If predictions exist, set `FORCE_RETRAIN=1` to retrain
+     - **Note:** FORCE_RETRAIN defaults to True (always retrains)
+     - Set `FORCE_RETRAIN=0` to skip retraining if predictions exist
    - Cell 6: Generate submission.tsv (optional)
-   - Cell 7: Submit to Kaggle (optional - requires Kaggle CLI + credentials)
+   - Cell 7: Install Kaggle CLI (optional)
+   - Cell 8: Submit to Kaggle (optional - requires credentials in parent dir `.env`)
 
 ### Output
 The notebook produces:
@@ -184,16 +189,20 @@ This means you must manually ensure all required files are present before runnin
 
 ## Troubleshooting
 
-### Kaggle Submission (Cell 7)
+### Kaggle Submission (Cell 8)
 
 **Setting up Kaggle credentials:**
 
-The notebook will automatically load credentials from a `.env` file in the project root. Create a `.env` file with:
+The notebook loads credentials from a `.env` file in the **parent directory** (one level up from where the notebook runs). Create a `.env` file at that location with:
 
 ```bash
 KAGGLE_USERNAME=your_username
 KAGGLE_KEY=your_api_key
 ```
+
+**File location:**
+- If running from `/workspace/`, create `.env` at `/` (parent directory)
+- If running from a project subfolder, create `.env` in the parent folder
 
 **Get your API key:**
 1. Go to https://www.kaggle.com/settings
@@ -202,26 +211,28 @@ KAGGLE_KEY=your_api_key
 4. This downloads `kaggle.json` containing your credentials
 5. Extract the username and key from the file
 
+**Install Kaggle CLI:**
+Cell 7 automatically installs the Kaggle CLI with:
+```bash
+!pip install kaggle
+```
+
 **Alternative:** Set environment variables directly:
 ```bash
 export KAGGLE_USERNAME=your_username
 export KAGGLE_KEY=your_api_key
 ```
 
-**Install Kaggle CLI:**
-```bash
-pip install kaggle
-```
-
 If you encounter issues submitting to Kaggle:
 
-**Kaggle CLI not found:**
+**Kaggle CLI not installed:**
+Run Cell 7 to install it automatically, or manually:
 ```bash
 pip install kaggle
 ```
 
 **API credentials not configured:**
-The cell will automatically load from `.env` or environment variables.
+The cell will automatically load from parent directory's `.env` file.
 
 **Submission failed:**
 - Check that `submission.tsv` exists in `WORK_ROOT`
@@ -230,7 +241,7 @@ The cell will automatically load from `.env` or environment variables.
 - Ensure daily submission limit not reached
 
 **Customize submission message:**
-Edit the `SUBMISSION_MESSAGE` variable in Cell 7:
+Edit the `SUBMISSION_MESSAGE` variable in Cell 8:
 ```python
 SUBMISSION_MESSAGE = 'Your custom message here'
 ```
@@ -242,17 +253,17 @@ If you get "Missing required modality 'esm2_3b'" error:
 
 ### KNN Training Issues
 
-**Training skipped with "Predictions already exist":**
-The notebook skips training if predictions already exist to save time. To force retraining:
+**Training always runs (FORCE_RETRAIN=True by default):**
+The notebook now retrains by default to ensure fresh predictions. To skip retraining if predictions exist:
 ```python
 import os
-os.environ['FORCE_RETRAIN'] = '1'
+os.environ['FORCE_RETRAIN'] = '0'
 # Then run Cell 5
 ```
 
 Or set the environment variable before starting Jupyter:
 ```bash
-export FORCE_RETRAIN=1
+export FORCE_RETRAIN=0
 jupyter notebook
 ```
 
