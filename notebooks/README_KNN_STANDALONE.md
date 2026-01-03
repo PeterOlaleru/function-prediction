@@ -109,6 +109,27 @@ The notebook produces:
 
 ## Important Notes
 
+### Score Calibration (Critical Fix)
+
+**Version 2 Fix:** Removed per-protein max normalization that was destroying score calibration.
+
+**Previous issue:**
+- Cell 5 was normalizing each protein's scores by dividing by the max value
+- This made every protein have max score = 1.0
+- Low thresholds (0.05-0.10) then let almost everything through
+- Result: Over-prediction and poor F1 scores (~0.07)
+
+**Current implementation:**
+- Scores are IA-weighted and normalized by sum of similarities
+- Scores naturally range in [0, 1] without per-protein normalization
+- Proper score calibration maintained across proteins
+- Expected F1: ~0.25-0.30 with appropriate thresholds
+
+**Recommended thresholds:**
+- Test multiple values: 0.01, 0.02, 0.05, 0.10, 0.15, 0.20
+- Cell 5 automatically tests these and reports best threshold
+- Per-aspect thresholds from training data are preferred
+
 ### Fixed Issues
 This standalone notebook includes fixes for issues in the original e2e notebook:
 - ✓ Added missing `_l2_norm` function
