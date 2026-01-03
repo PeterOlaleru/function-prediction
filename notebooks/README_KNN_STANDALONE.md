@@ -1,298 +1,136 @@
-# KNN Standalone Notebook
+# KNN Standalone Notebook (Baseline-Aligned)
 
 ## Overview
-`knn_standalone.ipynb` is a streamlined notebook extracted from `05_cafa_e2e.ipynb` that runs **only** the KNN model training without the overhead of HuggingFace file downloading/uploading.
+`knn_standalone.ipynb` implements KNN using **baseline methodology** that achieved F1 ~0.216. This notebook fixes critical bugs in the e2e pipeline that caused F1 to drop to ~0.072.
+
+## Baseline Alignment Fixes
+
+Based on detailed auditor feedback, this notebook addresses all 5 performance regressions:
+
+| Issue | E2E Pipeline (Wrong) | Baseline (Correct) | Status |
+|-------|---------------------|-------------------|--------|
+| **Term Universe** | Filtered to 13,500 terms | Full vocabulary (~25,000+ terms) | ✅ **FIXED** |
+| **Score Aggregation** | IA-weighted (double-weighting bug) | Pure similarity | ✅ **FIXED** |
+| **Normalization** | No per-protein normalization | Per-protein max normalization | ✅ **FIXED** |
+| **Thresholds** | Low thresholds (0.01-0.30) | Higher thresholds (0.1-0.8) | ✅ **FIXED** |
+| **Hierarchy** | Explicit GO propagation (redundant) | No propagation (pre-propagated labels) | ✅ **FIXED** |
+
+**Expected Result:** F1 should improve from ~0.072 to ~0.20-0.25 (baseline methodology with better 3B embeddings).
 
 ## What's Included
-This notebook contains the minimal required cells to train the KNN model and generate a Kaggle submission:
+This notebook contains 9 cells for complete KNN training and Kaggle submission:
 
-1. **Cell 0 (Markdown)**: Title and introduction
-2. **Cell 1 (Code)**: Basic environment setup (NO REPO)
-3. **Cell 2 (Code)**: Simplified configuration
-   - Environment detection (Kaggle/Colab/Local)
-   - WORK_ROOT setup
-   - TRAIN_LEVEL1 flag
-   - Stub CheckpointStore (no HuggingFace operations)
-4. **Cell 3 (Code)**: Data loading (Phase 2 setup)
+1. **Cell 0 (Markdown)**: Overview and alignment notes
+2. **Cell 1 (Code)**: Basic environment setup
+3. **Cell 2 (Code)**: Simplified configuration (NO HuggingFace)
+4. **Cell 3 (Code)**: Data loading with FULL term vocabulary
+   - **BASELINE FIX:** Uses ALL terms (~25,000+), not filtered to 13,500
    - Loads training/test features
-   - Loads target labels (Y)
-   - Defines helper functions
+   - Creates target matrix Y with full vocabulary
 5. **Cell 4 (Code)**: KNN helper functions
-   - L2 normalization function
-   - Uniform weights (NO IA weighting to avoid double-weighting)
-   - Y_knn preparation
-   - X_knn_test preparation
-6. **Cell 5 (Code)**: KNN training (FIXED - fully functional)
+   - **BASELINE FIX:** Uniform weights (NO IA to avoid double-weighting)
+   - L2 normalization, Y_knn setup, X_knn_test setup
+6. **Cell 5 (Code)**: KNN training (baseline-aligned)
+   - **BASELINE FIX:** Pure similarity aggregation (NO IA weighting)
+   - **BASELINE FIX:** Per-protein max normalization
    - cuML/sklearn KNN with cosine similarity
    - 5-fold cross-validation
-   - **Pure similarity aggregation** (NO IA weighting)
-   - **Dynamic F1 evaluation** (calculated, not hardcoded)
-   - **FORCE_RETRAIN defaults to True** (always retrains)
-   - Saves OOF and test predictions
-7. **Cell 6 (Code)**: Generate submission.tsv (NEW)
-   - Loads KNN test predictions
-   - Applies hierarchy propagation (Max/Min)
-   - Applies per-aspect thresholds
+   - Dynamic F1 evaluation with thresholds [0.1-0.8]
+   - FORCE_RETRAIN defaults to True
+7. **Cell 6 (Code)**: Generate submission.tsv (baseline-aligned)
+   - **BASELINE FIX:** NO GO hierarchy propagation (labels already pre-propagated)
+   - Applies per-aspect thresholds or default 0.3
    - Formats submission per CAFA rules
-   - Saves to `submission.tsv`
-8. **Cell 7 (Code)**: Install Kaggle CLI (NEW)
-   - Installs kaggle package via pip
-9. **Cell 8 (Code)**: Submit to Kaggle (NEW)
+8. **Cell 7 (Code)**: Install Kaggle CLI (`!pip install kaggle -q`)
+9. **Cell 8 (Code)**: Submit to Kaggle
    - Loads credentials from `.env` (parent directory)
-   - Submits `submission.tsv` to the competition
-   - Uses Kaggle CLI
-   - Customizable submission message
+   - Submits to competition
 
 ## What's NOT Included
-This notebook intentionally excludes:
-- ❌ HuggingFace file downloading (Cells 02b, 02c)
-- ❌ HuggingFace file uploading
+- ❌ HuggingFace file downloading/uploading
 - ❌ Kaggle dataset publishing
-- ❌ Checkpoint pull/push operations
-- ❌ Unnecessary setup cells
-- ❌ Other model training cells (GBDT, DNN, Logistic Regression)
+- ❌ Term filtering to 13,500
+- ❌ IA-weighted aggregation
+- ❌ GO hierarchy propagation
 
 ## Prerequisites
-Before running this notebook, you must have:
 
 ### Required Files
-- Pre-computed embeddings: `features/train_embeds_esm2_3b.npy`
-- Pre-computed embeddings: `features/test_embeds_esm2_3b.npy`
-- Parsed training data: `parsed/train_terms.parquet`
-- Parsed training sequences: `parsed/train_seq.feather`
-- Parsed test sequences: `parsed/test_seq.feather`
-- Top terms list: `features/top_terms_13500.json`
-- IA weights: `IA.tsv`
+Must exist before running the notebook:
+- `cafa6_data/parsed/train_seq.feather`
+- `cafa6_data/parsed/train_terms.tsv`
+- `cafa6_data/parsed/test_seq.feather`
+- `cafa6_data/parsed/train_taxa.feather`
+- `cafa6_data/parsed/test_taxa.feather`
+- `cafa6_data/features/train_embeds_esm2_3b.npy`
+- `cafa6_data/features/test_embeds_esm2_3b.npy`
+- `cafa6_data/features/train_embeds_*.npy` (t5, esm2, ankh, text)
+- `cafa6_data/features/test_embeds_*.npy` (t5, esm2, ankh, text)
+- `cafa6_data/features/IA.tsv`
+- `cafa6_data/go-basic.obo`
 
-### Directory Structure
-```
-cafa6_data/
-├── features/
-│   ├── train_embeds_esm2_3b.npy
-│   ├── test_embeds_esm2_3b.npy
-│   ├── top_terms_13500.json
-│   └── level1_preds/         # Output directory
-├── parsed/
-│   ├── train_terms.parquet
-│   ├── train_seq.feather
-│   └── test_seq.feather
-└── IA.tsv
-```
+### Optional Files
+- `cafa6_data/features/aspect_thresholds.json` (for per-aspect thresholding)
+- `.env` file in parent directory with `KAGGLE_USERNAME` and `KAGGLE_KEY`
 
 ## Usage
 
-### Environment Variables
-- `CAFA_TRAIN_LEVEL1`: Set to `1` to train (default), `0` to skip
-- `FORCE_RETRAIN`: Set to `0` to skip retraining if predictions exist (default is `1` - always retrain)
-- `KNN_K`: Number of neighbors (default: 10)
-- `KNN_BATCH`: Batch size for predictions (default: 256)
-- `KAGGLE_USERNAME`: Your Kaggle username (for submission - loaded from parent dir `.env`)
-- `KAGGLE_KEY`: Your Kaggle API key (for submission - loaded from parent dir `.env`)
+### 1. Run All Cells
+Simply execute all cells in order:
+```bash
+# In Jupyter/Colab
+Run → Run All Cells
+```
 
-### Running the Notebook
-1. Ensure all prerequisites are in place
-2. Run cells sequentially:
-   - Cell 1: Environment setup
-   - Cell 2: Configuration
-   - Cell 3: Data loading
-   - Cell 4: KNN helper functions
-   - Cell 5: KNN training (generates predictions + **dynamic F1 evaluation**)
-     - **Note:** FORCE_RETRAIN defaults to True (always retrains)
-     - Set `FORCE_RETRAIN=0` to skip retraining if predictions exist
-   - Cell 6: Generate submission.tsv (optional)
-   - Cell 7: Install Kaggle CLI (optional)
-   - Cell 8: Submit to Kaggle (optional - requires credentials in parent dir `.env`)
-
-### Output
-The notebook produces:
-- `features/level1_preds/oof_pred_knn.npy`: Out-of-fold predictions
-- `features/level1_preds/test_pred_knn.npy`: Test set predictions
-- `features/oof_pred_knn.npy`: Backward-compatible copy
-- `features/test_pred_knn.npy`: Backward-compatible copy
-- `submission.tsv`: Competition submission file (if Cell 6 is run)
-- **F1 scores**: Dynamically calculated and printed during training
-
-## Important Notes
-
-### Score Calibration (Critical Fix)
-
-**Version 3 Fix (Auditor Feedback):** Removed IA weighting from score aggregation to fix double-weighting issue.
-
-**Root cause of poor performance (F1 ~0.072):**
-
-1. **Double-weighting of IA scores** (CRITICAL):
-   - The notebook was multiplying scores by IA weights during prediction
-   - CAFA evaluation *already* weights by IA
-   - This caused double-weighting, over-prioritizing rare terms
-   - Result: Thousands of false-positive rare term predictions
-
-2. **Previous issue (v1):** Per-protein max normalization destroyed calibration
-
-**Current implementation (CORRECT):**
-- **Pure similarity aggregation**: `scores = (similarities @ neighbor_labels) / sum(similarities)`
-- **No IA weighting** during prediction (CAFA evaluation handles IA)
-- Scores naturally range in [0, 1] without manipulation
-- Proper score calibration maintained across proteins
-
-**What was wrong:**
+### 2. Force Retraining
+By default, the notebook retrains KNN every time. To skip retraining and load existing predictions:
 ```python
-# WRONG - Double weights by IA:
-scores = (sims @ (Y_neighbors * IA_weights)) / sum(sims)
+# Before running Cell 5
+import os
+os.environ['FORCE_RETRAIN'] = '0'
 ```
 
-**What's correct:**
-```python
-# CORRECT - Pure similarity, IA handled by CAFA eval:
-scores = (sims @ Y_neighbors) / sum(sims)
-```
-
-**Expected F1:** ~0.20-0.25 with proper pure similarity aggregation
-
-### Fixed Issues
-This standalone notebook includes fixes for issues in the original e2e notebook:
-- ✓ Added missing `_l2_norm` function
-- ✓ Added missing `Y_knn` variable setup
-- ✓ Added missing `X_knn_test` variable setup
-- ✓ Added missing `weights_full` loading
-- ✓ Fixed incomplete sklearn KNN initialization in fold loop
-- ✓ Fixed missing KNN fitting and prediction code in CV folds
-- ✓ Added proper similarity conversion for both cuML and sklearn backends
-
-The KNN implementation in this notebook is **fully functional** and will run successfully.
-
-### Output
-The notebook produces:
-- `features/level1_preds/oof_pred_knn.npy`: Out-of-fold predictions
-- `features/level1_preds/test_pred_knn.npy`: Test set predictions
-- `features/oof_pred_knn.npy`: Backward-compatible copy
-- `features/test_pred_knn.npy`: Backward-compatible copy
-
-## Performance
-- **Runtime**: ~30-60 minutes on A100 GPU (with cuML)
-- **Memory**: ~20-30GB RAM, ~10GB VRAM
-- **Expected F1**: ~0.25-0.26 (IA-weighted, dynamically calculated)
-
-## F1 Evaluation
-The notebook includes **dynamic F1 evaluation** in Cell 5:
-- Calculates IA-weighted F1 at multiple thresholds (0.1, 0.2, 0.3, 0.4, 0.5)
-- Reports precision and recall for each threshold
-- Identifies the best threshold automatically
-- F1 scores are **calculated on the fly**, not hardcoded
-
-Example output:
-```
-  Threshold   F1      Precision  Recall
-  ------------------------------------------
-  0.10       0.2234  0.1523      0.4156
-  0.20       0.2512  0.2145      0.3234
-  0.30       0.2579  0.2567      0.2591
-  0.40       0.2401  0.2987      0.2012
-  0.50       0.2145  0.3245      0.1678
-  ------------------------------------------
-  Best: F1=0.2579 @ threshold=0.30
-```
-
-## Differences from Full Pipeline
-The CheckpointStore in this notebook is a stub that:
-- Does **not** download files from HuggingFace
-- Does **not** upload files to HuggingFace
-- Only prints status messages
-
-This means you must manually ensure all required files are present before running.
-
-## Troubleshooting
-
-### Kaggle Submission (Cell 8)
-
-**Setting up Kaggle credentials:**
-
-The notebook loads credentials from a `.env` file in the **parent directory** (one level up from where the notebook runs). Create a `.env` file at that location with:
-
+### 3. Kaggle Submission
+Create `.env` file in parent directory:
 ```bash
 KAGGLE_USERNAME=your_username
 KAGGLE_KEY=your_api_key
 ```
 
-**File location:**
-- If running from `/workspace/`, create `.env` at `/` (parent directory)
-- If running from a project subfolder, create `.env` in the parent folder
+Then run Cells 7 and 8 to install Kaggle CLI and submit.
 
-**Get your API key:**
-1. Go to https://www.kaggle.com/settings
-2. Scroll to "API" section
-3. Click "Create New API Token"
-4. This downloads `kaggle.json` containing your credentials
-5. Extract the username and key from the file
+## Troubleshooting
 
-**Install Kaggle CLI:**
-Cell 7 automatically installs the Kaggle CLI with:
-```bash
-!pip install kaggle
-```
+### Issue: "FileNotFoundError: Missing KNN test predictions"
+**Solution:** Run Cell 5 (KNN training) first with `FORCE_RETRAIN=1`
 
-**Alternative:** Set environment variables directly:
-```bash
-export KAGGLE_USERNAME=your_username
-export KAGGLE_KEY=your_api_key
-```
+### Issue: "Kaggle CLI not found"
+**Solution:** Run Cell 7 to install: `!pip install kaggle -q`
 
-If you encounter issues submitting to Kaggle:
+### Issue: "Kaggle credentials not found"
+**Solution:** Create `.env` file with `KAGGLE_USERNAME` and `KAGGLE_KEY` in parent directory
 
-**Kaggle CLI not installed:**
-Run Cell 7 to install it automatically, or manually:
-```bash
-pip install kaggle
-```
+### Issue: Low F1 score (~0.07)
+**Solution:** This is the bug we fixed! Make sure you're running the latest version with:
+- Full term vocabulary (no 13,500 filtering)
+- Per-protein max normalization
+- No IA weighting during aggregation
+- No GO hierarchy propagation
 
-**API credentials not configured:**
-The cell will automatically load from parent directory's `.env` file.
+## Performance Expectations
 
-**Submission failed:**
-- Check that `submission.tsv` exists in `WORK_ROOT`
-- Verify you have accepted the competition rules
-- Check file format: tab-separated, no header, 3 columns (EntryID, term, score)
-- Ensure daily submission limit not reached
+| Metric | E2E Pipeline (Broken) | Baseline-Aligned (Fixed) |
+|--------|----------------------|--------------------------|
+| F1 Score | ~0.072 | ~0.20-0.25 |
+| Term Universe | 13,500 | ~25,000+ |
+| Score Aggregation | IA-weighted (wrong) | Pure similarity (correct) |
+| Normalization | None (wrong) | Per-protein max (correct) |
+| Best Threshold | N/A | ~0.3-0.4 |
 
-**Customize submission message:**
-Edit the `SUBMISSION_MESSAGE` variable in Cell 8:
-```python
-SUBMISSION_MESSAGE = 'Your custom message here'
-```
+## Key Differences from Baseline KNN
 
-### Missing Files
-If you get "Missing required modality 'esm2_3b'" error:
-- Ensure `features/train_embeds_esm2_3b.npy` exists
-- Ensure `features/test_embeds_esm2_3b.npy` exists
+While this notebook follows baseline methodology, it uses:
+- **Better embeddings:** ESM2-3B (vs ESM2-8M in baseline)
+- **More modalities:** T5, ESM2-650M, ESM2-3B, Ankh, Text, Taxa (vs single ESM2-8M)
+- **Expected improvement:** Richer embeddings should provide 10-20% F1 boost over baseline
 
-### KNN Training Issues
-
-**Training always runs (FORCE_RETRAIN=True by default):**
-The notebook now retrains by default to ensure fresh predictions. To skip retraining if predictions exist:
-```python
-import os
-os.environ['FORCE_RETRAIN'] = '0'
-# Then run Cell 5
-```
-
-Or set the environment variable before starting Jupyter:
-```bash
-export FORCE_RETRAIN=0
-jupyter notebook
-```
-
-### Missing Dependencies
-If you get import errors:
-- Install cuML for GPU acceleration (optional)
-- Install sklearn, numpy, pandas (required)
-
-### Performance Issues
-If KNN is too slow:
-- Install cuML for 10-20x speedup on A100 GPU
-- Reduce `KNN_K` for faster neighbor search
-- Increase `KNN_BATCH` for better GPU utilization
-
-## Related Files
-- `05_cafa_e2e.ipynb`: Full end-to-end pipeline
-- `02_baseline_knn.ipynb`: Original KNN baseline implementation
-- `docs/KNN_FIX_IMPLEMENTATION.md`: KNN implementation details
-- `docs/KNN_PERFORMANCE_ANALYSIS.md`: KNN performance analysis
