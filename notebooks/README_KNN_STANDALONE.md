@@ -19,13 +19,13 @@ This notebook contains the minimal required cells to train the KNN model and gen
    - Defines helper functions
 5. **Cell 4 (Code)**: KNN helper functions
    - L2 normalization function
-   - IA weights loading
+   - Uniform weights (NO IA weighting to avoid double-weighting)
    - Y_knn preparation
    - X_knn_test preparation
 6. **Cell 5 (Code)**: KNN training (FIXED - fully functional)
    - cuML/sklearn KNN with cosine similarity
    - 5-fold cross-validation
-   - IA-weighted neighbor voting
+   - **Pure similarity aggregation** (NO IA weighting)
    - **Dynamic F1 evaluation** (calculated, not hardcoded)
    - **FORCE_RETRAIN defaults to True** (always retrains)
    - Saves OOF and test predictions
@@ -116,24 +116,37 @@ The notebook produces:
 
 ### Score Calibration (Critical Fix)
 
-**Version 2 Fix:** Removed per-protein max normalization that was destroying score calibration.
+**Version 3 Fix (Auditor Feedback):** Removed IA weighting from score aggregation to fix double-weighting issue.
 
-**Previous issue:**
-- Cell 5 was normalizing each protein's scores by dividing by the max value
-- This made every protein have max score = 1.0
-- Low thresholds (0.05-0.10) then let almost everything through
-- Result: Over-prediction and poor F1 scores (~0.07)
+**Root cause of poor performance (F1 ~0.072):**
 
-**Current implementation:**
-- Scores are IA-weighted and normalized by sum of similarities
-- Scores naturally range in [0, 1] without per-protein normalization
+1. **Double-weighting of IA scores** (CRITICAL):
+   - The notebook was multiplying scores by IA weights during prediction
+   - CAFA evaluation *already* weights by IA
+   - This caused double-weighting, over-prioritizing rare terms
+   - Result: Thousands of false-positive rare term predictions
+
+2. **Previous issue (v1):** Per-protein max normalization destroyed calibration
+
+**Current implementation (CORRECT):**
+- **Pure similarity aggregation**: `scores = (similarities @ neighbor_labels) / sum(similarities)`
+- **No IA weighting** during prediction (CAFA evaluation handles IA)
+- Scores naturally range in [0, 1] without manipulation
 - Proper score calibration maintained across proteins
-- Expected F1: ~0.25-0.30 with appropriate thresholds
 
-**Recommended thresholds:**
-- Test multiple values: 0.01, 0.02, 0.05, 0.10, 0.15, 0.20
-- Cell 5 automatically tests these and reports best threshold
-- Per-aspect thresholds from training data are preferred
+**What was wrong:**
+```python
+# WRONG - Double weights by IA:
+scores = (sims @ (Y_neighbors * IA_weights)) / sum(sims)
+```
+
+**What's correct:**
+```python
+# CORRECT - Pure similarity, IA handled by CAFA eval:
+scores = (sims @ Y_neighbors) / sum(sims)
+```
+
+**Expected F1:** ~0.20-0.25 with proper pure similarity aggregation
 
 ### Fixed Issues
 This standalone notebook includes fixes for issues in the original e2e notebook:
