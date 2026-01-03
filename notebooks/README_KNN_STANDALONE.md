@@ -80,8 +80,11 @@ cafa6_data/
 
 ### Environment Variables
 - `CAFA_TRAIN_LEVEL1`: Set to `1` to train (default), `0` to skip
+- `FORCE_RETRAIN`: Set to `1` to force retraining even if predictions exist
 - `KNN_K`: Number of neighbors (default: 10)
 - `KNN_BATCH`: Batch size for predictions (default: 256)
+- `KAGGLE_USERNAME`: Your Kaggle username (for submission)
+- `KAGGLE_KEY`: Your Kaggle API key (for submission)
 
 ### Running the Notebook
 1. Ensure all prerequisites are in place
@@ -91,8 +94,9 @@ cafa6_data/
    - Cell 3: Data loading
    - Cell 4: KNN helper functions
    - Cell 5: KNN training (generates predictions + **dynamic F1 evaluation**)
+     - **Note:** If predictions exist, set `FORCE_RETRAIN=1` to retrain
    - Cell 6: Generate submission.tsv (optional)
-   - Cell 7: Submit to Kaggle (optional - requires Kaggle CLI)
+   - Cell 7: Submit to Kaggle (optional - requires Kaggle CLI + credentials)
 
 ### Output
 The notebook produces:
@@ -160,6 +164,34 @@ This means you must manually ensure all required files are present before runnin
 ## Troubleshooting
 
 ### Kaggle Submission (Cell 7)
+
+**Setting up Kaggle credentials:**
+
+The notebook will automatically load credentials from a `.env` file in the project root. Create a `.env` file with:
+
+```bash
+KAGGLE_USERNAME=your_username
+KAGGLE_KEY=your_api_key
+```
+
+**Get your API key:**
+1. Go to https://www.kaggle.com/settings
+2. Scroll to "API" section
+3. Click "Create New API Token"
+4. This downloads `kaggle.json` containing your credentials
+5. Extract the username and key from the file
+
+**Alternative:** Set environment variables directly:
+```bash
+export KAGGLE_USERNAME=your_username
+export KAGGLE_KEY=your_api_key
+```
+
+**Install Kaggle CLI:**
+```bash
+pip install kaggle
+```
+
 If you encounter issues submitting to Kaggle:
 
 **Kaggle CLI not found:**
@@ -168,17 +200,13 @@ pip install kaggle
 ```
 
 **API credentials not configured:**
-1. Go to https://www.kaggle.com/settings
-2. Click "Create New API Token"
-3. Save `kaggle.json` to:
-   - Linux/Mac: `~/.kaggle/kaggle.json`
-   - Windows: `C:\Users\<YourUsername>\.kaggle\kaggle.json`
-4. Set permissions: `chmod 600 ~/.kaggle/kaggle.json` (Linux/Mac)
+The cell will automatically load from `.env` or environment variables.
 
 **Submission failed:**
 - Check that `submission.tsv` exists in `WORK_ROOT`
 - Verify you have accepted the competition rules
 - Check file format: tab-separated, no header, 3 columns (EntryID, term, score)
+- Ensure daily submission limit not reached
 
 **Customize submission message:**
 Edit the `SUBMISSION_MESSAGE` variable in Cell 7:
@@ -190,6 +218,22 @@ SUBMISSION_MESSAGE = 'Your custom message here'
 If you get "Missing required modality 'esm2_3b'" error:
 - Ensure `features/train_embeds_esm2_3b.npy` exists
 - Ensure `features/test_embeds_esm2_3b.npy` exists
+
+### KNN Training Issues
+
+**Training skipped with "Predictions already exist":**
+The notebook skips training if predictions already exist to save time. To force retraining:
+```python
+import os
+os.environ['FORCE_RETRAIN'] = '1'
+# Then run Cell 5
+```
+
+Or set the environment variable before starting Jupyter:
+```bash
+export FORCE_RETRAIN=1
+jupyter notebook
+```
 
 ### Missing Dependencies
 If you get import errors:
